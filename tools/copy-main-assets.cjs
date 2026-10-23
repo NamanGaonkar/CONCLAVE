@@ -8,6 +8,8 @@ const MAIN_ASSETS = [
   ['src/main/slack-trigger.cjs', 'out/main/slack-trigger.cjs'],
   // Knowledge Graph core (pure-JS, no native deps) — required by knowledge.ts.
   ['src/main/kg-core.cjs', 'out/main/kg-core.cjs'],
+  ['build/icon.ico', 'out/main/icon.ico'],
+  ['build/icon.png', 'out/main/icon.png'],
 ];
 
 for (const [fromRel, toRel] of MAIN_ASSETS) {

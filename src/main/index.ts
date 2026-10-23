@@ -1,4 +1,4 @@
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification, nativeImage } from 'electron';
 import { spawn } from 'node:child_process';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
@@ -2312,7 +2312,11 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
   const cascade = isFloor ? floorCascade() : null;
   const geom = cascade ?? saved;
 
+  const iconPath = join(__dirname, process.platform === 'win32' ? 'icon.ico' : 'icon.png');
+  const appIcon = existsSync(iconPath) ? nativeImage.createFromPath(iconPath) : undefined;
+
   const win = new BrowserWindow({
+    icon: appIcon,
     width: geom?.width ?? DEFAULT_WIN.width,
     height: geom?.height ?? DEFAULT_WIN.height,
     ...(geom && geom.x !== undefined && geom.y !== undefined ? { x: geom.x, y: geom.y } : {}),
@@ -5373,6 +5377,10 @@ function onSystemResume(reason: string): void {
 }
 
 app.whenReady().then(() => {
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('com.conclave.desktop');
+  }
+
   // Realtime Michael mic-gate hygiene (rt-8 / Pam rt-10 nit): the voice session
   // opens the mic permission gate by persisting realtimeVoiceEnabled=true and
   // closes it on disconnect — but a hard crash/reload mid-session skips that
