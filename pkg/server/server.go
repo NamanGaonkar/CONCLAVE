@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -8,6 +9,7 @@ import (
 	"io/fs"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"conclave/pkg/agent"
 	"conclave/pkg/gitops"
 	"conclave/pkg/monitor"
+	"conclave/pkg/pty"
 	"conclave/pkg/store"
 )
 
@@ -65,6 +68,7 @@ type Server struct {
 	overlapDetector *monitor.OverlapDetector
 	wsClients       map[*WSConn]bool
 	wsMu            sync.Mutex
+	PTYManager      *pty.Manager
 }
 
 // New creates a new Server instance.
@@ -88,6 +92,7 @@ func New(token, configDir, initialProjectDir string, uiAssets fs.FS) (*Server, e
 		agentToSession:  make(map[string]string),
 		overlapDetector: monitor.NewOverlapDetector(),
 		wsClients:       make(map[*WSConn]bool),
+		PTYManager:      pty.NewManager(),
 	}
 
 	// Restore previous sessions from store if available
@@ -132,9 +137,12 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/merge", s.authMiddleware(s.handleMerge))
 	mux.HandleFunc("/api/discard", s.authMiddleware(s.handleDiscard))
 	mux.HandleFunc("/api/logs", s.authMiddleware(s.handleLogs))
+	mux.HandleFunc("/api/project/browse", s.authMiddleware(s.handleProjectBrowse))
+	mux.HandleFunc("/api/project/reveal", s.authMiddleware(s.handleProjectReveal))
 
-	// WebSocket handler
+	// WebSocket handlers
 	mux.HandleFunc("/ws", s.handleWS)
+	mux.HandleFunc("/ws/term", s.handleWSTerm)
 
 	// Static UI assets via go:embed
 	fileServer := http.FileServer(http.FS(s.UIAssets))
@@ -932,4 +940,180 @@ func (s *Server) saveSessionsLocked() {
 		list = append(list, sess.Session)
 	}
 	_ = store.SaveSessions(s.ConfigDir, list)
+}
+
+// Close terminates all running agent instances and PTY sessions.
+func (s *Server) Close() {
+	if s.PTYManager != nil {
+		s.PTYManager.CloseAll()
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	for _, sess := range s.sessions {
+		if sess.Instance != nil {
+			_ = sess.Instance.Stop()
+		}
+	}
+}
+
+func (s *Server) handleProjectBrowse(w http.ResponseWriter, r *http.Request) {
+	folder, err := pickFolderDialog()
+	if err != nil || folder == "" {
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(map[string]any{"cancelled": true})
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"path": folder,
+	})
+}
+
+func (s *Server) handleProjectReveal(w http.ResponseWriter, r *http.Request) {
+	var req struct {
+		Path string `json:"path"`
+	}
+	_ = json.NewDecoder(r.Body).Decode(&req)
+	target := req.Path
+	if target == "" {
+		s.mu.RLock()
+		target = s.ProjectDir
+		s.mu.RUnlock()
+	}
+	if target == "" {
+		http.Error(w, `{"error":"No folder to reveal"}`, http.StatusBadRequest)
+		return
+	}
+	_ = revealInExplorer(target)
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{"ok": true})
+}
+
+func (s *Server) handleWSTerm(w http.ResponseWriter, r *http.Request) {
+	token := r.URL.Query().Get("t")
+	if token != s.Token {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	ws, err := Upgrade(w, r)
+	if err != nil {
+		return
+	}
+	defer ws.Close()
+
+	agentID := r.URL.Query().Get("agentId")
+	if agentID == "" {
+		agentID = "default"
+	}
+
+	cols := 120
+	rows := 30
+	if cStr := r.URL.Query().Get("cols"); cStr != "" {
+		if c, err := strconv.Atoi(cStr); err == nil && c > 0 {
+			cols = c
+		}
+	}
+	if rStr := r.URL.Query().Get("rows"); rStr != "" {
+		if rVal, err := strconv.Atoi(rStr); err == nil && rVal > 0 {
+			rows = rVal
+		}
+	}
+
+	// Resolve target directory
+	s.mu.RLock()
+	targetDir := s.ProjectDir
+	if sessID, ok := s.agentToSession[agentID]; ok {
+		if act, exists := s.sessions[sessID]; exists && act.Session != nil {
+			targetDir = act.Session.WorktreePath
+		}
+	}
+	s.mu.RUnlock()
+
+	if targetDir == "" {
+		targetDir, _ = os.Getwd()
+	}
+
+	// Start or get PTY session
+	ptySess := s.PTYManager.Get(agentID)
+	if ptySess == nil || ptySess.Dir != targetDir {
+		var startErr error
+		ptySess, startErr = s.PTYManager.Start(agentID, targetDir, cols, rows)
+		if startErr != nil {
+			errJSON, _ := json.Marshal(map[string]any{
+				"type":    "error",
+				"message": startErr.Error(),
+			})
+			_ = ws.WriteText(string(errJSON))
+			return
+		}
+	}
+
+	// Send initial metadata
+	initMsg, _ := json.Marshal(map[string]any{
+		"type":    "init",
+		"agentId": agentID,
+		"dir":     targetDir,
+	})
+	_ = ws.WriteText(string(initMsg))
+
+	sub := ptySess.Subscribe()
+	defer ptySess.Unsubscribe(sub)
+
+	ctx, cancel := context.WithCancel(r.Context())
+	defer cancel()
+
+	// Goroutine: stream PTY output to WebSocket
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case chunk, ok := <-sub.C():
+				if !ok {
+					return
+				}
+				outMsg, _ := json.Marshal(map[string]any{
+					"type": "output",
+					"data": string(chunk),
+				})
+				if err := ws.WriteText(string(outMsg)); err != nil {
+					cancel()
+					return
+				}
+			}
+		}
+	}()
+
+	// Reader loop: handle client input
+	for {
+		msgStr, err := ws.ReadMessage()
+		if err != nil {
+			cancel()
+			break
+		}
+
+		var payload struct {
+			Type    string `json:"type"`
+			Data    string `json:"data"`
+			Command string `json:"command"`
+			Cols    int    `json:"cols"`
+			Rows    int    `json:"rows"`
+		}
+		if err := json.Unmarshal([]byte(msgStr), &payload); err != nil {
+			_, _ = ptySess.Write([]byte(msgStr))
+			continue
+		}
+
+		switch payload.Type {
+		case "input":
+			_, _ = ptySess.Write([]byte(payload.Data))
+		case "command":
+			_, _ = ptySess.Write([]byte(payload.Command + "\r"))
+		case "resize":
+			_ = ptySess.Resize(payload.Cols, payload.Rows)
+		case "clear":
+			ptySess.Clear()
+		}
+	}
 }

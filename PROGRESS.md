@@ -118,3 +118,32 @@ Stack:
   4. `TestAcceptance4_MissingAgent`: Verified missing CLI command reports clear error without crashing (PASS).
   5. `TestAcceptance5_RestoreOnRestart`: Verified chats, worktrees, and sessions restored upon server restart (PASS).
 - Complete test suite (`go test ./... -v`) passed with exit code 0.
+
+---
+
+### Stage 7: Interactive Terminal, Model Config & Boot Animation (Verified)
+- **Interactive ConPTY Terminal Bridge (`pkg/pty`)**:
+  - Implemented Windows ConPTY bridge (`pkg/pty/manager_windows.go` and `pkg/pty/session.go`) spawning interactive PowerShell sessions attached to Windows Job Objects (`killJob`).
+  - Terminal output ring buffer (512 KB) with instant replay on client connect.
+  - Interactive WebSocket streaming endpoint (`/ws/term`) supporting raw keystrokes, window resizing, and interactive prompts.
+- **Embedded Xterm.js Aesthetic**:
+  - Bundled local `xterm.js`, `xterm.css`, and `xterm-addon-fit.js` with zero runtime CDN dependencies.
+  - Styled with custom Ember Amber palette (`#0C0A07` background, `#F5AF28` cursor, `#FFD15C` bright text).
+- **Model Configuration & Quick Actions**:
+  - Added dedicated quick command toolbar for fast model selection and configuration:
+    - `whis providers` / `whis models`
+    - `opencode auth` / `opencode --model`
+    - `agy --help` / `agy config`
+    - `freebuff login`
+  - Runs directly inside the active agent's isolated worktree directory (`.conclave/worktrees/<agent>-<slug>`).
+- **Workspace & Folder Management**:
+  - Integrated native Windows folder picker (`SHBrowseForFolderW` via `/api/project/browse`).
+  - Added Windows Explorer reveal button (`/api/project/reveal`) and click-to-copy path.
+  - Workspace management modal (`#modal-workspace`) for switching folders, checking Git repository status, and one-click Git initialization.
+- **Cyber / Ember Boot Startup Animation**:
+  - Restored letter-by-letter glowing title animation `C O N C L A V E` (`#boot` overlay with `@keyframes bootIn`).
+  - Ambient effects: `#cursor-glow` pointer follower, `#scanlines`, and `#noise`.
+  - Sequential boot terminal log output and smooth amber progress fill bar (`#boot-fill`).
+- **Verification**:
+  - All unit and acceptance tests passed (`go test -v ./...`).
+  - Binaries built cleanly: `conclave.exe` (7.80 MB) and `conclave-gui.exe` (7.80 MB).

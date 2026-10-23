@@ -109,6 +109,7 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	_ = httpServer.Shutdown(ctx)
+	srv.Close()
 	if job != nil {
 		_ = job.Close()
 	}
