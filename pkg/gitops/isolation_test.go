@@ -119,4 +119,124 @@ func TestWorktreeIsolationAndOverlap(t *testing.T) {
 	if cp.Hash == "" || !strings.Contains(cp.Message, "first pass complete") {
 		t.Fatalf("invalid checkpoint: %+v", cp)
 	}
+
+	// 10. Test GetFileDiff
+	diff, err := GetFileDiff(agent1Session.WorktreePath, "shared.txt")
+	if err != nil {
+		t.Fatalf("failed to get file diff: %v", err)
+	}
+	if !strings.Contains(diff, "Agent 1 changes") {
+		t.Fatalf("expected diff to contain 'Agent 1 changes', got: %s", diff)
+	}
+}
+
+func TestSelectiveMergeAndRollback(t *testing.T) {
+	mainRepo, err := os.MkdirTemp("", "conclave-selmerge-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(mainRepo)
+
+	if err := InitRepo(mainRepo); err != nil {
+		t.Fatalf("failed to init repo: %v", err)
+	}
+
+	// Setup baseline with fileA.txt and fileB.txt
+	_ = os.WriteFile(filepath.Join(mainRepo, "fileA.txt"), []byte("Base A\n"), 0644)
+	_ = os.WriteFile(filepath.Join(mainRepo, "fileB.txt"), []byte("Base B\n"), 0644)
+	_, _ = RunGit(mainRepo, "add", "-A")
+	_, _ = RunGit(mainRepo, "commit", "-m", "init files")
+
+	// Create worktree
+	sess, err := CreateWorktree(mainRepo, "whis", "sel-task", "Selective test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer RemoveWorktree(mainRepo, sess.WorktreePath, sess.Branch, true)
+
+	// Modify fileA and fileB in worktree
+	_ = os.WriteFile(filepath.Join(sess.WorktreePath, "fileA.txt"), []byte("Whis A changes\n"), 0644)
+	_ = os.WriteFile(filepath.Join(sess.WorktreePath, "fileB.txt"), []byte("Whis B changes\n"), 0644)
+
+	// Create checkpoint
+	cp, err := CommitCheckpoint(sess.WorktreePath, "checkpoint 1")
+	if err != nil || cp == nil {
+		t.Fatalf("failed checkpoint: %v", err)
+	}
+
+	// Further modify fileA
+	_ = os.WriteFile(filepath.Join(sess.WorktreePath, "fileA.txt"), []byte("Whis A corrupted\n"), 0644)
+
+	// Rollback to checkpoint
+	err = RollbackToCheckpoint(sess.WorktreePath, cp.Hash)
+	if err != nil {
+		t.Fatalf("failed rollback: %v", err)
+	}
+	contentA, _ := os.ReadFile(filepath.Join(sess.WorktreePath, "fileA.txt"))
+	if strings.TrimSpace(string(contentA)) != "Whis A changes" {
+		t.Fatalf("expected rollback to restore 'Whis A changes', got %s", string(contentA))
+	}
+
+	// Perform SELECTIVE MERGE of only fileA.txt
+	targetBranch, _ := CurrentBranch(mainRepo)
+	result, err := ExecuteSelectiveMerge(mainRepo, sess.Branch, targetBranch, []string{"fileA.txt"})
+	if err != nil || !result.Success {
+		t.Fatalf("selective merge failed: %v, output: %s", err, result.Output)
+	}
+
+	// Verify in main repo: fileA has changes, fileB remains untouched!
+	mainA, _ := os.ReadFile(filepath.Join(mainRepo, "fileA.txt"))
+	mainB, _ := os.ReadFile(filepath.Join(mainRepo, "fileB.txt"))
+
+	if strings.TrimSpace(string(mainA)) != "Whis A changes" {
+		t.Fatalf("expected fileA in main to be updated, got: %s", string(mainA))
+	}
+	if strings.TrimSpace(string(mainB)) != "Base B" {
+		t.Fatalf("expected fileB in main to remain 'Base B', got: %s", string(mainB))
+	}
+}
+
+func TestBootstrapWorktree(t *testing.T) {
+	mainRepo, err := os.MkdirTemp("", "conclave-bootstrap-*")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(mainRepo)
+
+	if err := InitRepo(mainRepo); err != nil {
+		t.Fatal(err)
+	}
+
+	// Create .env and .env.local in main repo
+	_ = os.WriteFile(filepath.Join(mainRepo, ".env"), []byte("API_KEY=testkey\n"), 0644)
+	_ = os.WriteFile(filepath.Join(mainRepo, ".env.local"), []byte("DEBUG=true\n"), 0644)
+
+	// Create a dummy node_modules directory
+	modulesDir := filepath.Join(mainRepo, "node_modules")
+	_ = os.MkdirAll(modulesDir, 0755)
+	_ = os.WriteFile(filepath.Join(modulesDir, "pkg.json"), []byte("{}"), 0644)
+
+	// Initial commit so we can create worktree
+	_ = os.WriteFile(filepath.Join(mainRepo, "README.md"), []byte("# Test"), 0644)
+	_, _ = RunGit(mainRepo, "add", "-A")
+	_, _ = RunGit(mainRepo, "commit", "-m", "init")
+
+	// Create worktree
+	sess, err := CreateWorktree(mainRepo, "opencode", "boot-task", "Bootstrap test", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer RemoveWorktree(mainRepo, sess.WorktreePath, sess.Branch, true)
+
+	// Verify .env was copied
+	wtEnv, err := os.ReadFile(filepath.Join(sess.WorktreePath, ".env"))
+	if err != nil || strings.TrimSpace(string(wtEnv)) != "API_KEY=testkey" {
+		t.Fatalf("worktree .env missing or wrong: %v, content: %s", err, string(wtEnv))
+	}
+
+	// Verify node_modules was linked
+	wtModules := filepath.Join(sess.WorktreePath, "node_modules", "pkg.json")
+	if _, err := os.Stat(wtModules); os.IsNotExist(err) {
+		t.Fatalf("expected node_modules to be linked in worktree: %v", err)
+	}
 }

@@ -23,6 +23,7 @@ type ProcessAgentInstance struct {
 	logMu     sync.RWMutex
 	statusMu  sync.RWMutex
 	eventChan chan Event
+	port      int
 }
 
 // NewAgentInstance creates a new runtime instance for an agent definition.
@@ -31,6 +32,14 @@ func NewAgentInstance(def AgentDefinition) *ProcessAgentInstance {
 		def:    def,
 		status: StatusIdle,
 	}
+}
+
+func (a *ProcessAgentInstance) SetPort(port int) {
+	a.port = port
+}
+
+func (a *ProcessAgentInstance) Port() int {
+	return a.port
 }
 
 func (a *ProcessAgentInstance) Definition() AgentDefinition {
@@ -80,6 +89,13 @@ func (a *ProcessAgentInstance) Start(ctx context.Context, task string, workdir s
 	// Setup environment
 	cmd.Env = os.Environ()
 	cmd.Env = append(cmd.Env, "FORCE_COLOR=0", "NO_COLOR=1")
+	if a.port > 0 {
+		cmd.Env = append(cmd.Env,
+			fmt.Sprintf("PORT=%d", a.port),
+			fmt.Sprintf("VITE_PORT=%d", a.port),
+			fmt.Sprintf("SERVER_PORT=%d", a.port),
+		)
+	}
 	for k, v := range a.def.Env {
 		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", k, v))
 	}

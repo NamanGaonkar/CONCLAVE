@@ -186,6 +186,15 @@
         </div>
       </div>
 
+      <!-- Visual Checkpoint Timeline Scrub Bar (Plandex style) -->
+      <div class="checkpoint-bar hidden" id="checkpoint-bar">
+        <div class="checkpoint-bar-header">
+          <span class="checkpoint-bar-title">TIMELINE CHECKPOINTS</span>
+          <span class="checkpoint-bar-hint">Click a checkpoint to view diff or rollback</span>
+        </div>
+        <div class="checkpoint-nodes" id="checkpoint-nodes"></div>
+      </div>
+
       <!-- Messages Stream -->
       <div class="chat-messages" id="chat-messages">
         <!-- Chat bubbles & activity cards -->
@@ -238,6 +247,15 @@
       <!-- Scope / Overlap Alerts in Changes panel -->
       <div class="panel-alerts" id="panel-alerts"></div>
 
+      <!-- Selective File Merge Bar (Cursor / GitButler style) -->
+      <div class="changes-selection-bar" id="changes-selection-bar">
+        <label class="cb-label" title="Select / deselect all files for merge">
+          <input type="checkbox" id="cb-select-all-files" checked>
+          <span>Select All Files</span>
+        </label>
+        <span class="selection-count" id="selection-count">0/0</span>
+      </div>
+
       <!-- Changed files list -->
       <div class="changed-files-list" id="changed-files-list">
         <div class="empty-state-muted">No changes in this worktree yet.</div>
@@ -254,14 +272,42 @@
 
       <!-- Merge / Review Actions (Stage 4) -->
       <div class="changes-footer">
-        <button class="btn btn-primary btn-block" id="btn-merge-task">✓ Review & Merge</button>
+        <button class="btn btn-primary btn-block" id="btn-merge-task">✓ Review & Merge Selected</button>
         <div class="btn-group-row">
-          <button class="btn btn-secondary btn-sm" id="btn-ask-review">Ask Agent to Review</button>
+          <button class="btn btn-secondary btn-sm" id="btn-ask-review" title="Dispatch changes to another agent for automated peer review">⬡ Peer Review</button>
           <button class="btn btn-danger btn-sm" id="btn-discard-task">Discard</button>
         </div>
       </div>
     </aside>
   </main>
+
+  <!-- Conductor Bottom Status Bar (Linear style) -->
+  <footer class="conductor-bar" id="conductor-bar">
+    <div class="conductor-left">
+      <div class="conductor-item" id="conductor-agents-status" title="Active agents running tasks">
+        <span class="conductor-dot dot-idle" id="conductor-status-dot"></span>
+        <span id="conductor-agents-text">0 Agents Active</span>
+      </div>
+      <div class="conductor-item conductor-ports" id="conductor-ports" title="Dynamic port assignments">
+        <span class="icon-port">🌐</span>
+        <span id="conductor-ports-text">No active servers</span>
+      </div>
+    </div>
+    <div class="conductor-center">
+      <div class="conductor-item conductor-overlap" id="conductor-overlap">
+        <span class="overlap-pill clean" id="conductor-overlap-pill">🟢 Clean Isolation</span>
+      </div>
+      <div class="conductor-item conductor-bootstrap" id="conductor-bootstrap" title="Environment and dependency linking">
+        <span>⚡ Worktree Bootstrapped</span>
+      </div>
+    </div>
+    <div class="conductor-right">
+      <div class="conductor-item conductor-worktree" id="conductor-worktree-path" title="Active worktree path">
+        <span class="icon-tree">🌿</span>
+        <span id="conductor-worktree-text">No Worktree Active</span>
+      </div>
+    </div>
+  </footer>
 
   <!-- Workspace & Folder Manager Modal -->
   <div class="modal-overlay hidden" id="modal-workspace">
@@ -328,6 +374,37 @@
       <div class="modal-footer">
         <button class="btn btn-secondary" id="btn-modal-add-agent">+ Add New Agent</button>
         <button class="btn btn-primary" id="btn-save-agents">Save Agents</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Peer Review & Handoff Modal (CrewAI & Pane style) -->
+  <div class="modal-overlay hidden" id="modal-review">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Agent Peer Review & Handoff</h3>
+        <button class="btn-icon" id="btn-close-review-modal">✕</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">
+          Dispatch this agent's changes and diff to a peer agent for rigorous automated code review.
+        </p>
+        <div class="form-group">
+          <label>Select Reviewer Agent:</label>
+          <select id="review-target-agent" class="input"></select>
+        </div>
+        <div class="form-group">
+          <label>Review Instructions / Focus Areas (optional):</label>
+          <textarea id="review-notes" class="input" rows="3" placeholder="e.g. Focus on edge cases, error handling, security, performance, and API design."></textarea>
+        </div>
+        <div class="review-preview-box" id="review-preview-box">
+          <div class="review-preview-header">Summary of Changes to Review:</div>
+          <div class="review-preview-content" id="review-preview-content">Loading...</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-cancel-review">Cancel</button>
+        <button class="btn btn-primary" id="btn-submit-review">Dispatch Code Review ↵</button>
       </div>
     </div>
   </div>

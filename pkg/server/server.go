@@ -134,6 +134,8 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/task/undo", s.authMiddleware(s.handleTaskUndo))
 	mux.HandleFunc("/api/task/stop", s.authMiddleware(s.handleTaskStop))
 	mux.HandleFunc("/api/changes", s.authMiddleware(s.handleChanges))
+	mux.HandleFunc("/api/changes/file-diff", s.authMiddleware(s.handleFileDiff))
+	mux.HandleFunc("/api/task/review", s.authMiddleware(s.handleTaskReview))
 	mux.HandleFunc("/api/merge", s.authMiddleware(s.handleMerge))
 	mux.HandleFunc("/api/discard", s.authMiddleware(s.handleDiscard))
 	mux.HandleFunc("/api/logs", s.authMiddleware(s.handleLogs))
@@ -440,6 +442,9 @@ func (s *Server) handleTaskStart(w http.ResponseWriter, r *http.Request) {
 	}
 
 	s.mu.Lock()
+	assignedPort := 3100 + len(s.sessions) + 1
+	worktreeSession.Port = assignedPort
+	instance.SetPort(assignedPort)
 	s.sessions[worktreeSession.ID] = activeSess
 	s.agentToSession[body.AgentID] = worktreeSession.ID
 	s.saveSessionsLocked()
@@ -645,6 +650,9 @@ func (s *Server) handleTaskRedirect(w http.ResponseWriter, r *http.Request) {
 
 	if agentDef != nil {
 		newInstance := agent.NewAgentInstance(*agentDef)
+		if sess.Session.Port > 0 {
+			newInstance.SetPort(sess.Session.Port)
+		}
 		sess.Instance = newInstance
 		sess.Status = agent.StatusWorking
 
@@ -815,10 +823,12 @@ func (s *Server) handleChanges(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(resp)
 }
 
-// Stage 4: Merge Handler (Never auto-merges; dry run first)
+// Stage 4: Merge Handler (Never auto-merges; dry run first; supports selective file merge)
 func (s *Server) handleMerge(w http.ResponseWriter, r *http.Request) {
 	var body struct {
-		SessionID string `json:"sessionId"`
+		SessionID    string   `json:"sessionId"`
+		Files        []string `json:"files,omitempty"`
+		KeepWorktree bool     `json:"keepWorktree,omitempty"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -836,42 +846,218 @@ func (s *Server) handleMerge(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Commit any uncommitted worktree changes before merging
-	_, _ = gitops.CommitCheckpoint(sess.Session.WorktreePath, "Final pre-merge commit")
+	_, _ = gitops.CommitCheckpoint(sess.Session.WorktreePath, "Pre-merge commit")
 
-	// Execute safe merge with dry-run verification
-	result, err := gitops.ExecuteMerge(projectDir, sess.Session.Branch, sess.Session.BaseBranch)
+	var result *gitops.MergeResult
+	var err error
+
+	if len(body.Files) > 0 {
+		result, err = gitops.ExecuteSelectiveMerge(projectDir, sess.Session.Branch, sess.Session.BaseBranch, body.Files)
+	} else {
+		result, err = gitops.ExecuteMerge(projectDir, sess.Session.Branch, sess.Session.BaseBranch)
+	}
+
 	if err != nil || (result != nil && !result.Success) {
+		conflicts := []string{}
+		if result != nil && len(result.Conflicts) > 0 {
+			conflicts = result.Conflicts
+		} else if err != nil {
+			conflicts = append(conflicts, err.Error())
+		}
+		output := ""
+		if result != nil {
+			output = result.Output
+		}
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"success":   false,
-			"conflicts": result.Conflicts,
-			"output":    result.Output,
+			"conflicts": conflicts,
+			"output":    output,
 			"error":     fmt.Sprintf("%v", err),
 		})
 		return
 	}
 
-	// Clean up worktree on successful merge
-	_ = gitops.RemoveWorktree(projectDir, sess.Session.WorktreePath, sess.Session.Branch, true)
+	// If KeepWorktree is not requested, clean up worktree and session
+	if !body.KeepWorktree {
+		_ = gitops.RemoveWorktree(projectDir, sess.Session.WorktreePath, sess.Session.Branch, true)
 
-	s.mu.Lock()
-	s.overlapDetector.ClearAgent(sess.Session.AgentID)
-	delete(s.sessions, body.SessionID)
-	delete(s.agentToSession, sess.Session.AgentID)
-	s.saveSessionsLocked()
-	s.mu.Unlock()
+		s.mu.Lock()
+		s.overlapDetector.ClearAgent(sess.Session.AgentID)
+		delete(s.sessions, body.SessionID)
+		delete(s.agentToSession, sess.Session.AgentID)
+		s.saveSessionsLocked()
+		s.mu.Unlock()
 
-	s.Broadcast("task-merged", map[string]any{
-		"sessionId": body.SessionID,
-		"agentId":   sess.Session.AgentID,
-	})
+		s.Broadcast("task-merged", map[string]any{
+			"sessionId": body.SessionID,
+			"agentId":   sess.Session.AgentID,
+		})
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	_ = json.NewEncoder(w).Encode(map[string]any{
 		"success":      true,
 		"mergedCommit": result.MergedCommit,
 		"output":       result.Output,
+		"keptWorktree": body.KeepWorktree,
 	})
+}
+
+// Stage 4: Granular per-file diff handler
+func (s *Server) handleFileDiff(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.URL.Query().Get("sessionId")
+	filePath := r.URL.Query().Get("file")
+
+	s.mu.RLock()
+	sess, ok := s.sessions[sessionID]
+	s.mu.RUnlock()
+
+	if !ok {
+		http.Error(w, `{"error":"Session not found"}`, http.StatusNotFound)
+		return
+	}
+
+	diffText, err := gitops.GetFileDiff(sess.Session.WorktreePath, filePath)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(map[string]any{
+		"file": filePath,
+		"diff": diffText,
+	})
+}
+
+// CrewAI & Pane style: 1-Click Peer Review & Handoff
+func (s *Server) handleTaskReview(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		SourceSessionID string `json:"sourceSessionId"`
+		TargetAgentID   string `json:"targetAgentId"`
+		ReviewNotes     string `json:"reviewNotes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	s.mu.RLock()
+	sourceSess, ok := s.sessions[body.SourceSessionID]
+	var targetDef *agent.AgentDefinition
+	for _, a := range s.agents {
+		if a.ID == body.TargetAgentID {
+			cpy := a
+			targetDef = &cpy
+			break
+		}
+	}
+	projectDir := s.ProjectDir
+	s.mu.RUnlock()
+
+	if !ok {
+		http.Error(w, `{"error":"Source session not found"}`, http.StatusNotFound)
+		return
+	}
+	if targetDef == nil {
+		http.Error(w, `{"error":"Target agent not found"}`, http.StatusBadRequest)
+		return
+	}
+
+	// 1. Gather diff and changed files from source worktree
+	changedFiles, _ := gitops.GetChangedFiles(sourceSess.Session.WorktreePath)
+	diffText, _ := gitops.GetWorktreeDiff(sourceSess.Session.WorktreePath)
+
+	var fileNames []string
+	for _, f := range changedFiles {
+		fileNames = append(fileNames, fmt.Sprintf("%s (%s, +%d/-%d)", f.Path, f.Status, f.Additions, f.Deletions))
+	}
+
+	if len(diffText) > 12000 {
+		diffText = diffText[:12000] + "\n... [diff truncated for length] ..."
+	}
+
+	// 2. Build structured review brief
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("CRITICAL CODE REVIEW REQUEST\n"))
+	sb.WriteString(fmt.Sprintf("Source Agent: @%s\n", sourceSess.Session.AgentID))
+	sb.WriteString(fmt.Sprintf("Branch: %s\n", sourceSess.Session.Branch))
+	sb.WriteString(fmt.Sprintf("Original Goal: %s\n\n", sourceSess.Session.Task))
+	if strings.TrimSpace(body.ReviewNotes) != "" {
+		sb.WriteString(fmt.Sprintf("User Review Guidance: %s\n\n", body.ReviewNotes))
+	}
+	sb.WriteString(fmt.Sprintf("Modified Files (%d):\n", len(fileNames)))
+	for _, fn := range fileNames {
+		sb.WriteString("- " + fn + "\n")
+	}
+	sb.WriteString("\nUnified Diff:\n")
+	sb.WriteString(diffText)
+	sb.WriteString("\n\nPlease review these changes thoroughly for correctness, potential bugs, edge cases, regressions, and code quality. Provide concise, actionable feedback.")
+
+	reviewPrompt := sb.String()
+
+	// 3. Create worktree for reviewer agent
+	taskSlug := fmt.Sprintf("review-%s", sourceSess.Session.AgentID)
+	reviewerWorktree, err := gitops.CreateWorktree(projectDir, body.TargetAgentID, taskSlug, reviewPrompt, nil)
+	if err != nil {
+		http.Error(w, fmt.Sprintf(`{"error":"Failed to create reviewer worktree: %v"}`, err), http.StatusInternalServerError)
+		return
+	}
+
+	instance := agent.NewAgentInstance(*targetDef)
+	now := time.Now()
+	activeSess := &ActiveSession{
+		Session:  reviewerWorktree,
+		Instance: instance,
+		Status:   agent.StatusWorking,
+		Timeline: []TimelineEvent{
+			{
+				Type:        "started",
+				Title:       fmt.Sprintf("Reviewing @%s", sourceSess.Session.AgentID),
+				Description: sourceSess.Session.Task,
+				Timestamp:   now,
+			},
+		},
+		Messages: []ChatMessage{
+			{
+				ID:        fmt.Sprintf("msg-%d", now.UnixNano()),
+				SessionID: reviewerWorktree.ID,
+				AgentID:   body.TargetAgentID,
+				Sender:    "user",
+				Type:      "text",
+				Content:   fmt.Sprintf("[Code Review Request for @%s]\nOriginal Task: %s", sourceSess.Session.AgentID, sourceSess.Session.Task),
+				Timestamp: now,
+			},
+		},
+	}
+
+	s.mu.Lock()
+	assignedPort := 3100 + len(s.sessions) + 1
+	reviewerWorktree.Port = assignedPort
+	instance.SetPort(assignedPort)
+	s.sessions[reviewerWorktree.ID] = activeSess
+	s.agentToSession[body.TargetAgentID] = reviewerWorktree.ID
+	s.saveSessionsLocked()
+	s.mu.Unlock()
+
+	eventChan, startErr := instance.Start(r.Context(), reviewPrompt, reviewerWorktree.WorktreePath)
+	if startErr != nil {
+		activeSess.Status = agent.StatusError
+		http.Error(w, fmt.Sprintf(`{"error":"%v"}`, startErr), http.StatusInternalServerError)
+		return
+	}
+
+	go s.streamAgentEvents(reviewerWorktree.ID, body.TargetAgentID, eventChan)
+
+	s.Broadcast("task-started", activeSess)
+	s.Broadcast("agent-status", map[string]any{
+		"agentId": body.TargetAgentID,
+		"status":  agent.StatusWorking,
+	})
+
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(activeSess)
 }
 
 // Stage 4: Discard Handler

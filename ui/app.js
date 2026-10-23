@@ -110,8 +110,10 @@
         S.sessions[payload.session.id] = payload;
         renderAgentsSidebar();
         renderChatMessages();
+        renderCheckpointBar();
         loadChangesForActiveAgent();
         updateTerminalDirectory();
+        updateConductorBar();
         break;
       case "chat-message":
         if (!S.sessions[payload.sessionId]) {
@@ -120,25 +122,31 @@
         S.sessions[payload.sessionId].messages.push(payload);
         appendChatMessage(payload);
         loadChangesForActiveAgent();
+        updateConductorBar();
         break;
       case "agent-status":
         updateAgentStatus(payload.agentId, payload.status);
+        updateConductorBar();
         break;
       case "overlaps-updated":
         S.overlaps = payload;
         renderOverlaps();
+        updateConductorBar();
         break;
       case "task-merged":
       case "task-discarded":
         delete S.sessions[payload.sessionId];
         renderAgentsSidebar();
         renderChatMessages();
+        renderCheckpointBar();
         loadChangesForActiveAgent();
         updateTerminalDirectory();
+        updateConductorBar();
         break;
       case "agents-updated":
         S.agents = payload;
         renderAgentsSidebar();
+        updateConductorBar();
         break;
     }
   }
@@ -166,7 +174,9 @@
       updateProjectUI();
       renderAgentsSidebar();
       renderChatMessages();
+      renderCheckpointBar();
       renderOverlaps();
+      updateConductorBar();
       connectWebSocket();
       setupEventListeners();
       setupResizers();
@@ -248,6 +258,7 @@
       activeSession.status = status;
     }
     renderAgentsSidebar();
+    updateConductorBar();
   }
 
   function selectAgent(agentId) {
@@ -283,8 +294,10 @@
     }
 
     renderChatMessages();
+    renderCheckpointBar();
     loadChangesForActiveAgent();
     updateTerminalDirectory();
+    updateConductorBar();
   }
 
   // ============================================================ CHAT & MESSAGES
@@ -394,13 +407,18 @@
     }
   }
 
-  // ============================================================ CHANGES & MERGE
+  // ============================================================ CHANGES & MERGE (Cursor & GitButler Selective)
+  let currentChangedFiles = [];
+  let selectedFiles = new Set();
+  let activePreviewFile = null;
+
   async function loadChangesForActiveAgent() {
     const filesList = $("#changed-files-list");
     const diffCode = $("#diff-code");
     const diffTitle = $("#diff-file-title");
     const badge = $("#changes-count");
     const alerts = $("#panel-alerts");
+    const selBar = $("#changes-selection-bar");
     alerts.innerHTML = "";
 
     const activeSession = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
@@ -409,63 +427,121 @@
       filesList.innerHTML = `<div class="empty-state-muted">No active worktree for this agent.</div>`;
       diffCode.textContent = "Select a task with changes to view diff.";
       badge.textContent = "0 files";
+      if (selBar) selBar.classList.add("hidden");
       return;
     }
 
     try {
       const res = await api(`/api/changes?sessionId=${encodeURIComponent(activeSession.session.id)}`);
-      badge.textContent = `${res.files ? res.files.length : 0} files`;
+      const files = res.files || [];
+      currentChangedFiles = files;
+      badge.textContent = `${files.length} files`;
 
       // Render Scope Violations
-      if (res.scopeViolations && res.scopeViolations.length > 0) {
+      if (res.violations && res.violations.length > 0) {
         alerts.innerHTML += `
           <div class="alert-box alert-warning">
-            ⚠️ <strong>Scope Violation:</strong> Changes outside scope (${escapeHtml(activeSession.session.fileScope)}):
-            <ul>${res.scopeViolations.map((f) => `<li>${escapeHtml(f)}</li>`).join("")}</ul>
+            ⚠️ <strong>Scope Violation:</strong> Changes outside scope (${escapeHtml((activeSession.session.fileScope || []).join(", "))}):
+            <ul>${res.violations.map((f) => `<li>${escapeHtml(f.filePath)}</li>`).join("")}</ul>
           </div>
         `;
       }
 
       // Render Overlaps
-      const agentOverlaps = S.overlaps.filter((o) => o.agents.includes(activeSession.session.agentId));
+      const agentOverlaps = S.overlaps.filter((o) => (o.agents || []).includes(activeSession.session.agentId));
       if (agentOverlaps.length > 0) {
         alerts.innerHTML += `
           <div class="alert-box alert-danger">
             🚨 <strong>Overlap Warning:</strong> This agent shares modified files with another agent worktree!
-            <ul>${agentOverlaps.map((o) => `<li>${escapeHtml(o.file)} (with ${o.agents.join(", ")})</li>`).join("")}</ul>
+            <ul>${agentOverlaps.map((o) => `<li>${escapeHtml(o.file)} (with ${(o.agents || []).join(", ")})</li>`).join("")}</ul>
           </div>
         `;
       }
 
-      // Render Files
-      if (!res.files || res.files.length === 0) {
+      if (files.length === 0) {
         filesList.innerHTML = `<div class="empty-state-muted">No files modified in worktree yet.</div>`;
-      } else {
-        filesList.innerHTML = "";
-        res.files.forEach((f) => {
-          const row = document.createElement("div");
-          row.className = "file-item";
-          row.innerHTML = `
-            <div class="file-item-left">
-              <span class="file-status-${f.status}">${f.status}</span>
-              <span>${escapeHtml(f.path)}</span>
-            </div>
-            <span class="diff-stat">+${f.added} -${f.deleted}</span>
-          `;
-          filesList.appendChild(row);
-        });
-      }
-
-      // Render Unified Diff
-      if (res.diff) {
-        diffTitle.textContent = `Diff (${activeSession.session.branch})`;
-        renderColoredDiff(res.diff);
-      } else {
+        if (selBar) selBar.classList.add("hidden");
         diffTitle.textContent = "Unified Diff";
         diffCode.textContent = "No unstaged or committed changes.";
+        return;
+      }
+
+      if (selBar) selBar.classList.remove("hidden");
+      selectedFiles = new Set(files.map((f) => f.path));
+      updateSelectionCounter();
+
+      filesList.innerHTML = "";
+      files.forEach((f) => {
+        const row = document.createElement("div");
+        row.className = "file-item" + (activePreviewFile === f.path ? " active-file" : "");
+        row.dataset.path = f.path;
+
+        row.innerHTML = `
+          <div class="file-item-left">
+            <input type="checkbox" class="file-select-cb" data-path="${escapeHtml(f.path)}" ${selectedFiles.has(f.path) ? "checked" : ""}>
+            <span class="file-status-${f.status}">${f.status}</span>
+            <span class="file-name" title="${escapeHtml(f.path)}">${escapeHtml(f.path)}</span>
+          </div>
+          <span class="diff-stat">+${f.additions || 0} -${f.deletions || 0}</span>
+        `;
+
+        const cb = row.querySelector(".file-select-cb");
+        cb.onclick = (e) => {
+          e.stopPropagation();
+          if (cb.checked) {
+            selectedFiles.add(f.path);
+          } else {
+            selectedFiles.delete(f.path);
+          }
+          updateSelectionCounter();
+        };
+
+        row.onclick = () => {
+          activePreviewFile = f.path;
+          $$(".file-item").forEach((el) => el.classList.remove("active-file"));
+          row.classList.add("active-file");
+          loadFileDiff(activeSession.session.id, f.path);
+        };
+
+        filesList.appendChild(row);
+      });
+
+      // Render full diff initially
+      if (!activePreviewFile && res.diff) {
+        diffTitle.textContent = `Unified Diff (${activeSession.session.branch})`;
+        renderColoredDiff(res.diff);
       }
     } catch (err) {
       console.error("Failed to load changes:", err);
+    }
+  }
+
+  async function loadFileDiff(sessionId, filePath) {
+    const diffTitle = $("#diff-file-title");
+    diffTitle.textContent = `Diff: ${filePath}`;
+    try {
+      const res = await api(`/api/changes/file-diff?sessionId=${encodeURIComponent(sessionId)}&file=${encodeURIComponent(filePath)}`);
+      renderColoredDiff(res.diff || "No diff recorded for this file.");
+    } catch (err) {
+      renderColoredDiff(`Failed to load file diff: ${err.message}`);
+    }
+  }
+
+  function updateSelectionCounter() {
+    const cbAll = $("#cb-select-all-files");
+    const countEl = $("#selection-count");
+    const total = currentChangedFiles.length;
+    const sel = selectedFiles.size;
+    if (countEl) {
+      countEl.textContent = `${sel} / ${total} selected`;
+    }
+    if (cbAll) {
+      cbAll.checked = sel === total && total > 0;
+      cbAll.indeterminate = sel > 0 && sel < total;
+    }
+    const mergeBtn = $("#btn-merge-task");
+    if (mergeBtn) {
+      mergeBtn.textContent = sel === total ? "✓ Review & Merge All" : `✓ Merge Selected (${sel} files)`;
     }
   }
 
@@ -498,6 +574,132 @@
       text.textContent = `Overlap Alert: ${files}`;
     } else {
       banner.classList.add("hidden");
+    }
+    updateConductorBar();
+  }
+
+  // Checkpoint Scrub Bar (Plandex visual timeline)
+  function renderCheckpointBar() {
+    const bar = $("#checkpoint-bar");
+    const nodes = $("#checkpoint-nodes");
+    if (!bar || !nodes) return;
+
+    const curSess = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
+    if (!curSess || !curSess.session || !curSess.session.checkpoints || curSess.session.checkpoints.length === 0) {
+      bar.classList.add("hidden");
+      return;
+    }
+
+    bar.classList.remove("hidden");
+    nodes.innerHTML = "";
+
+    // Start Node
+    const startNode = document.createElement("div");
+    startNode.className = "checkpoint-node";
+    startNode.innerHTML = `<span class="checkpoint-node-dot"></span><span>Start</span>`;
+    startNode.title = `Original prompt: ${curSess.session.task}`;
+    nodes.appendChild(startNode);
+
+    // Checkpoint nodes
+    curSess.session.checkpoints.forEach((cp, idx) => {
+      const node = document.createElement("div");
+      node.className = "checkpoint-node";
+      const shortHash = cp.hash ? cp.hash.substring(0, 7) : `#${idx + 1}`;
+      node.innerHTML = `
+        <span class="checkpoint-node-dot"></span>
+        <span>${escapeHtml(shortHash)}: ${escapeHtml(cp.message || "Checkpoint")}</span>
+        <button class="checkpoint-rollback-btn" title="Rollback worktree to this checkpoint commit">↺ Rollback</button>
+      `;
+
+      const rollbackBtn = node.querySelector(".checkpoint-rollback-btn");
+      rollbackBtn.onclick = (e) => {
+        e.stopPropagation();
+        executeRollbackToCheckpoint(curSess.session.id, cp.hash);
+      };
+
+      node.onclick = () => {
+        $("#diff-file-title").textContent = `Diff at Checkpoint ${shortHash}`;
+        if (cp.diffStat) {
+          $("#diff-code").textContent = `${cp.message}\nCommit: ${cp.hash}\n\n${cp.diffStat}`;
+        }
+      };
+
+      nodes.appendChild(node);
+    });
+  }
+
+  async function executeRollbackToCheckpoint(sessionId, checkpointHash) {
+    if (!confirm(`Are you sure you want to rollback worktree to checkpoint ${checkpointHash.substring(0, 7)}? Unsaved changes after this checkpoint will be reset.`)) {
+      return;
+    }
+    try {
+      await api("/api/task/undo", {
+        method: "POST",
+        body: JSON.stringify({
+          sessionId: sessionId,
+          checkpointHash: checkpointHash,
+        }),
+      });
+      alert(`Worktree successfully rolled back to ${checkpointHash.substring(0, 7)}!`);
+      loadChangesForActiveAgent();
+      renderChatMessages();
+      updateConductorBar();
+    } catch (err) {
+      alert(`Rollback failed: ${err.message}`);
+    }
+  }
+
+  // Conductor Bottom Status Bar (Linear style)
+  function updateConductorBar() {
+    const dot = $("#conductor-status-dot");
+    const text = $("#conductor-agents-text");
+    const portsText = $("#conductor-ports-text");
+    const overlapPill = $("#conductor-overlap-pill");
+    const wtText = $("#conductor-worktree-text");
+    if (!dot || !text) return;
+
+    // 1. Active Agents
+    const activeList = Object.values(S.sessions).filter((s) => s.status === "working");
+    const totalSessions = Object.values(S.sessions).length;
+    if (activeList.length > 0) {
+      dot.className = "conductor-dot dot-working";
+      text.textContent = `${activeList.length} Active Agent${activeList.length > 1 ? "s" : ""} Working`;
+    } else {
+      dot.className = "conductor-dot dot-idle";
+      text.textContent = totalSessions > 0 ? `${totalSessions} Worktree${totalSessions > 1 ? "s" : ""} Idle` : "0 Agents Active";
+    }
+
+    // 2. Dynamic Port Assignments
+    const portList = [];
+    Object.values(S.sessions).forEach((s) => {
+      if (s.session && s.session.port) {
+        portList.push(`${s.session.agentId}: :${s.session.port}`);
+      }
+    });
+    if (portsText) {
+      portsText.textContent = portList.length > 0 ? portList.join(" | ") : "No server ports allocated";
+    }
+
+    // 3. Overlaps
+    if (overlapPill) {
+      if (S.overlaps && S.overlaps.length > 0) {
+        overlapPill.className = "overlap-pill warn";
+        overlapPill.textContent = `⚠️ ${S.overlaps.length} Overlap${S.overlaps.length > 1 ? "s" : ""}`;
+      } else {
+        overlapPill.className = "overlap-pill clean";
+        overlapPill.textContent = "🟢 Clean Isolation";
+      }
+    }
+
+    // 4. Active Worktree Path
+    if (wtText) {
+      const curSess = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
+      if (curSess && curSess.session) {
+        wtText.textContent = curSess.session.branch;
+        wtText.title = curSess.session.worktreePath;
+      } else {
+        wtText.textContent = S.projectDir ? "Main Repository" : "No Workspace Open";
+      }
     }
   }
 
@@ -541,6 +743,7 @@
       S.sessions[res.session.id] = { session: res.session, messages: [] };
       selectAgent(targetAgent);
       renderAgentsSidebar();
+      updateConductorBar();
     } catch (err) {
       alert(`Error starting task: ${err.message}`);
     }
@@ -569,32 +772,56 @@
 
       input.value = "";
       $("#redirect-drawer").classList.add("hidden");
+      renderCheckpointBar();
+      updateConductorBar();
     } catch (err) {
       alert(`Redirect failed: ${err.message}`);
     }
   }
 
-  // Stage 4: Safe Merge
+  // Stage 4: Safe Selective / Full Merge
   async function executeMerge() {
     const activeSession = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
     if (!activeSession) return;
 
-    if (!confirm(`Merge changes from worktree '${activeSession.session.branch}' into main?`)) return;
+    if (selectedFiles.size === 0) {
+      alert("No files selected to merge. Please check at least one file.");
+      return;
+    }
+
+    const isPartial = selectedFiles.size < currentChangedFiles.length;
+    const msg = isPartial
+      ? `Selectively merge ${selectedFiles.size} of ${currentChangedFiles.length} modified files from '${activeSession.session.branch}' into main?`
+      : `Merge all changes from worktree '${activeSession.session.branch}' into main?`;
+
+    if (!confirm(msg)) return;
 
     try {
+      const filesToMerge = isPartial ? Array.from(selectedFiles) : [];
       const res = await api("/api/merge", {
         method: "POST",
-        body: JSON.stringify({ sessionId: activeSession.session.id }),
+        body: JSON.stringify({
+          sessionId: activeSession.session.id,
+          files: filesToMerge,
+          keepWorktree: isPartial,
+        }),
       });
 
-      if (res.conflict) {
-        alert(`MERGE CONFLICT REPORTED:\n\n${res.conflictDetails}\n\nAuto-merge aborted to preserve worktree.`);
+      if (res.conflicts && res.conflicts.length > 0) {
+        alert(`MERGE CONFLICT REPORTED:\n\n${res.conflicts.join("\n")}\n\nAuto-merge aborted to preserve worktree.`);
       } else {
-        alert("Merge successfully completed into main!");
-        delete S.sessions[activeSession.session.id];
+        alert(
+          isPartial
+            ? `Selective merge of ${selectedFiles.size} files completed into main! Worktree kept open for remaining work.`
+            : "Full merge successfully completed into main!"
+        );
+        if (!isPartial) {
+          delete S.sessions[activeSession.session.id];
+        }
         renderAgentsSidebar();
         renderChatMessages();
         loadChangesForActiveAgent();
+        updateConductorBar();
       }
     } catch (err) {
       alert(`Merge error: ${err.message}`);
@@ -617,20 +844,72 @@
       renderAgentsSidebar();
       renderChatMessages();
       loadChangesForActiveAgent();
+      updateConductorBar();
     } catch (err) {
       alert(`Discard error: ${err.message}`);
     }
   }
 
-  function askReview() {
+  // 1-Click Peer Review & Handoff (CrewAI & Pane style)
+  function openReviewModal() {
+    const activeSession = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
+    if (!activeSession) {
+      alert("No active agent worktree session to review.");
+      return;
+    }
+
+    const select = $("#review-target-agent");
+    select.innerHTML = "";
+    S.agents.forEach((a) => {
+      if (a.id !== activeSession.session.agentId) {
+        const opt = document.createElement("option");
+        opt.value = a.id;
+        opt.textContent = `${a.name} (${a.command})`;
+        select.appendChild(opt);
+      }
+    });
+
+    if (select.children.length === 0) {
+      alert("Please configure at least one other agent to perform peer reviews.");
+      return;
+    }
+
+    const preview = $("#review-preview-content");
+    const count = currentChangedFiles.length;
+    preview.textContent =
+      `Branch: ${activeSession.session.branch}\nOriginal Task: "${activeSession.session.task}"\nModified Files (${count}):\n` +
+      currentChangedFiles.map((f) => `  • ${f.path} (+${f.additions || 0}/-${f.deletions || 0})`).join("\n");
+
+    $("#modal-review").classList.remove("hidden");
+  }
+
+  async function submitPeerReview() {
     const activeSession = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
     if (!activeSession) return;
 
-    const reviewer = prompt("Which agent should review these changes?", "whis");
-    if (!reviewer) return;
+    const targetAgent = $("#review-target-agent").value;
+    const reviewNotes = $("#review-notes").value.trim();
 
-    $("#composer-input").value = `@${reviewer} Please review the diff and changes from agent ${activeSession.session.agentId} in branch ${activeSession.session.branch}.`;
-    $("#composer-input").focus();
+    try {
+      const res = await api("/api/task/review", {
+        method: "POST",
+        body: JSON.stringify({
+          sourceSessionId: activeSession.session.id,
+          targetAgentId: targetAgent,
+          reviewNotes: reviewNotes,
+        }),
+      });
+
+      $("#modal-review").classList.add("hidden");
+      $("#review-notes").value = "";
+
+      S.sessions[res.session.id] = { session: res.session, messages: res.messages || [] };
+      selectAgent(targetAgent);
+      renderAgentsSidebar();
+      updateConductorBar();
+    } catch (err) {
+      alert(`Failed to dispatch review: ${err.message}`);
+    }
   }
 
   async function toggleRawLogs() {
@@ -861,9 +1140,40 @@
     $("#btn-execute-redirect").onclick = executeRedirect;
     $("#btn-merge-task").onclick = executeMerge;
     $("#btn-discard-task").onclick = executeDiscard;
-    $("#btn-ask-review").onclick = askReview;
     $("#btn-toggle-raw-logs").onclick = toggleRawLogs;
     $("#btn-close-logs").onclick = () => $("#raw-logs-drawer").classList.add("hidden");
+
+    // Selective File Selection & Peer Review
+    const cbSelectAll = $("#cb-select-all-files");
+    if (cbSelectAll) {
+      cbSelectAll.onchange = (e) => {
+        const checked = e.target.checked;
+        if (checked) {
+          selectedFiles = new Set(currentChangedFiles.map((f) => f.path));
+        } else {
+          selectedFiles.clear();
+        }
+        $$(".file-select-cb").forEach((cb) => (cb.checked = checked));
+        updateSelectionCounter();
+      };
+    }
+
+    $("#btn-ask-review").onclick = openReviewModal;
+    $("#btn-close-review-modal").onclick = () => $("#modal-review").classList.add("hidden");
+    $("#btn-cancel-review").onclick = () => $("#modal-review").classList.add("hidden");
+    $("#btn-submit-review").onclick = submitPeerReview;
+
+    const conductorWt = $("#conductor-worktree-path");
+    if (conductorWt) {
+      conductorWt.onclick = () => {
+        const curSess = Object.values(S.sessions).find((s) => s.session && s.session.agentId === S.activeAgent);
+        if (curSess && curSess.session && curSess.session.worktreePath) {
+          revealFolder(curSess.session.worktreePath);
+        } else if (S.projectDir) {
+          revealFolder(S.projectDir);
+        }
+      };
+    }
 
     // Terminal Drawer Actions
     $("#btn-top-terminal").onclick = () => openTerminalDrawer();

@@ -1154,6 +1154,218 @@ body.ember-theme {
   font-family: var(--font-mono);
 }
 
+/* Checkpoint Timeline Scrub Bar (Plandex style) */
+.checkpoint-bar {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.checkpoint-bar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+}
+.checkpoint-bar-title {
+  color: var(--amber-bright);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+}
+.checkpoint-bar-hint {
+  color: var(--text-muted);
+  font-size: 10.5px;
+}
+.checkpoint-nodes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0;
+}
+.checkpoint-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--surface-3);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 11.5px;
+  font-family: var(--font-mono);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 150ms ease;
+}
+.checkpoint-node:hover {
+  border-color: var(--amber);
+  background: rgba(245, 175, 40, 0.12);
+}
+.checkpoint-node.active {
+  border-color: var(--amber-bright);
+  box-shadow: 0 0 8px var(--amber-glow);
+  color: var(--amber-bright);
+}
+.checkpoint-node-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--amber);
+}
+.checkpoint-rollback-btn {
+  background: transparent;
+  border: 1px solid var(--border-light);
+  color: var(--amber-bright);
+  cursor: pointer;
+  font-size: 10.5px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 4px;
+}
+.checkpoint-rollback-btn:hover {
+  background: var(--amber-deep);
+  border-color: var(--amber);
+  color: #fff;
+}
+
+/* Selective File Merge Bar (Cursor / GitButler style) */
+.changes-selection-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.cb-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 500;
+}
+.selection-count {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.file-select-cb {
+  cursor: pointer;
+  accent-color: var(--amber);
+  width: 14px;
+  height: 14px;
+}
+.file-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 120ms ease;
+}
+.file-item:hover {
+  background: rgba(245, 175, 40, 0.08);
+}
+.file-item.active-file {
+  background: rgba(245, 175, 40, 0.15);
+  border-left: 2px solid var(--amber);
+}
+.file-item-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Conductor Bottom Status Bar (Linear style) */
+.conductor-bar {
+  height: 32px;
+  background: var(--surface-1);
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 14px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  z-index: 10;
+}
+.conductor-left, .conductor-center, .conductor-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.conductor-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.conductor-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+.conductor-dot.dot-idle {
+  background: var(--text-muted);
+}
+.conductor-dot.dot-working {
+  background: var(--amber-bright);
+  box-shadow: 0 0 8px var(--amber);
+  animation: ember-pulse 1.6s infinite ease-in-out;
+}
+.overlap-pill {
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10.5px;
+}
+.overlap-pill.clean {
+  background: rgba(123, 201, 111, 0.12);
+  color: var(--success);
+  border: 1px solid rgba(123, 201, 111, 0.3);
+}
+.overlap-pill.warn {
+  background: rgba(255, 107, 74, 0.15);
+  color: var(--error);
+  border: 1px solid rgba(255, 107, 74, 0.4);
+  animation: ember-pulse 1.8s infinite ease-in-out;
+}
+.review-preview-box {
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  margin-top: 12px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+.review-preview-header {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--amber-bright);
+  margin-bottom: 6px;
+  text-transform: uppercase;
+}
+.review-preview-content {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.4;
+}
+
 /* Utilities */
 .hidden {
   display: none !important;

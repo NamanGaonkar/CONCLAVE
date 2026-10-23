@@ -147,3 +147,35 @@ Stack:
 - **Verification**:
   - All unit and acceptance tests passed (`go test -v ./...`).
   - Binaries built cleanly: `conclave.exe` (7.80 MB) and `conclave-gui.exe` (7.80 MB).
+
+---
+
+### Stage 8: Architecture Revamp & Leading Ecosystem Features (Verified)
+- **Worktree Auto-Bootstrapping Engine (`pkg/gitops/bootstrap.go`, inspired by `git-gtr`)**:
+  - Automatically provisions `.env*` files (`.env`, `.env.local`, `.env.development`, etc.) into freshly created agent worktrees.
+  - Links heavy dependency directories (`node_modules`, `.venv`, `venv`, `vendor`) via Windows NTFS Directory Junctions (`mklink /J`), which requires zero administrator elevation and consumes zero duplicate disk storage.
+  - Injects dynamic conflict-free server ports (`PORT=3100+N`, `VITE_PORT=3100+N`, `SERVER_PORT=3100+N`) into agent process environments to prevent server collisions.
+- **Cursor & GitButler Interactive Selective File Merging (`pkg/gitops/merge.go`)**:
+  - Implemented `ExecuteSelectiveMerge`: granular checkout and staging of only user-selected files into the target branch.
+  - Added checkboxes `[x]` per file in the Changes panel with "Select All Files" and selection counters (`0/N selected`).
+  - Added per-file diff click inspection via `/api/changes/file-diff`.
+  - Added support for keeping worktree open during partial/selective merges (`keepWorktree: true`).
+- **Plandex Visual Checkpoint Timeline Scrub Bar (`RollbackToCheckpoint`)**:
+  - Embedded an interactive horizontal timeline scrub bar above chat messages (`#checkpoint-bar`).
+  - Visual nodes for Start, Redirects, and Checkpoints with short commit hashes, messages, and diffstats.
+  - 1-click "↺ Rollback" button triggering `/api/task/undo` to reset the worktree to any historical checkpoint commit.
+- **CrewAI & Pane 1-Click Peer Review & Task Handoff (`/api/task/review`)**:
+  - Added dedicated Peer Review modal (`#modal-review`) triggered from the Changes panel.
+  - Summarizes the current agent's diff, modified files list, and original goal.
+  - Automatically creates a review worktree for the selected peer agent with custom review instructions (e.g. edge cases, syntax, security).
+- **Linear-Style Conductor Bottom Status Bar (`#conductor-bar`)**:
+  - Conductor footer bar with live active agent count and ember pulsing glow.
+  - Real-time allocated server port indicator (`🌐 opencode: :3101 | whis: :3102`).
+  - Overlap monitor pill (`🟢 Clean Isolation` vs `⚠️ N Overlaps`).
+  - Worktree branch and path indicator with click-to-reveal in Windows Explorer.
+- **Verification & Acceptance Testing**:
+  - Added and passed `TestSelectiveMergeAndRollback` and `TestBootstrapWorktree` in `pkg/gitops` (`ok conclave/pkg/gitops 4.415s`).
+  - Added and passed `TestAcceptance6_SelectiveMerge` and `TestAcceptance7_PeerReviewAndFileDiff` in `pkg/server` (`ok conclave/pkg/server 9.377s`).
+  - Full project test suite passed cleanly (`go test ./...`).
+  - Live probe confirmed all four CLI agents (`opencode`, `whis`, `agy`, `freebuff`) operational.
+  - Executables rebuilt and ready for distribution: `conclave.exe` (7.85 MB) and `conclave-gui.exe` (7.85 MB).

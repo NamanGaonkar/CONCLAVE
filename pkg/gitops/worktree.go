@@ -29,7 +29,9 @@ type WorktreeSession struct {
 	CreatedAt    time.Time    `json:"createdAt"`
 	Task         string       `json:"task"`
 	FileScope    []string     `json:"fileScope,omitempty"`
-	Checkpoints  []Checkpoint `json:"checkpoints,omitempty"`
+	Checkpoints  []Checkpoint     `json:"checkpoints,omitempty"`
+	Bootstrap    *BootstrapReport `json:"bootstrap,omitempty"`
+	Port         int              `json:"port,omitempty"`
 }
 
 // Checkpoint records a git checkpoint commit in the worktree.
@@ -117,6 +119,9 @@ func CreateWorktree(repoRoot, agentID, taskSlug, taskPrompt string, fileScope []
 		return nil, fmt.Errorf("failed to create worktree '%s': %w", worktreeDir, err)
 	}
 
+	// Auto-bootstrap dependencies and environment (inspired by git-gtr)
+	bootReport, _ := BootstrapWorktree(root, worktreeDir)
+
 	session := &WorktreeSession{
 		ID:           fmt.Sprintf("%s-%s", agentID, slug),
 		AgentID:      agentID,
@@ -127,6 +132,7 @@ func CreateWorktree(repoRoot, agentID, taskSlug, taskPrompt string, fileScope []
 		CreatedAt:    time.Now(),
 		Task:         taskPrompt,
 		FileScope:    fileScope,
+		Bootstrap:    bootReport,
 	}
 
 	return session, nil
@@ -310,4 +316,45 @@ func CommitCheckpoint(worktreePath, message string) (*Checkpoint, error) {
 		Timestamp: time.Now(),
 		DiffStat:  diffStat,
 	}, nil
+}
+
+// RollbackToCheckpoint resets the worktree to a previous checkpoint hash.
+func RollbackToCheckpoint(worktreePath, commitHash string) error {
+	_, err := RunGit(worktreePath, "reset", "--hard", commitHash)
+	return err
+}
+
+// GetFileDiff returns the diff for a specific file in the worktree.
+func GetFileDiff(worktreePath, filePath string) (string, error) {
+	// 1. Try diff against HEAD for tracked files
+	out, err := RunGit(worktreePath, "diff", "HEAD", "--", filePath)
+	if err == nil && strings.TrimSpace(out) != "" {
+		return out, nil
+	}
+
+	// 2. Unstaged diff
+	out, err = RunGit(worktreePath, "diff", "--", filePath)
+	if err == nil && strings.TrimSpace(out) != "" {
+		return out, nil
+	}
+
+	// 3. Staged diff
+	out, err = RunGit(worktreePath, "diff", "--cached", "--", filePath)
+	if err == nil && strings.TrimSpace(out) != "" {
+		return out, nil
+	}
+
+	// 4. Untracked file
+	fullPath := filepath.Join(worktreePath, filePath)
+	if content, readErr := os.ReadFile(fullPath); readErr == nil {
+		lines := strings.Split(string(content), "\n")
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("diff --git a/%s b/%s\nnew file mode 100644\n--- /dev/null\n+++ b/%s\n@@ -0,0 +1,%d @@\n", filePath, filePath, filePath, len(lines)))
+		for _, l := range lines {
+			sb.WriteString("+" + l + "\n")
+		}
+		return sb.String(), nil
+	}
+
+	return "", nil
 }

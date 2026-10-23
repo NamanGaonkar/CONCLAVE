@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -289,5 +290,153 @@ func TestAcceptance5_RestoreOnRestart(t *testing.T) {
 
 	if len(boot.Sessions) == 0 || boot.Sessions[0].ID != sess.ID {
 		t.Fatalf("expected session '%s' to be restored on restart, got %+v", sess.ID, boot.Sessions)
+	}
+}
+
+// Acceptance Test 6: Cursor / GitButler style Selective File Merge
+func TestAcceptance6_SelectiveMerge(t *testing.T) {
+	srv, repoDir, configDir := setupTestServer(t)
+	defer os.RemoveAll(repoDir)
+	defer os.RemoveAll(configDir)
+
+	// Base repo files
+	_ = os.WriteFile(filepath.Join(repoDir, "docA.txt"), []byte("Base A\n"), 0644)
+	_ = os.WriteFile(filepath.Join(repoDir, "docB.txt"), []byte("Base B\n"), 0644)
+	_, _ = gitops.RunGit(repoDir, "add", "-A")
+	_, _ = gitops.RunGit(repoDir, "commit", "-m", "init docs")
+
+	// Create active session
+	sess, err := gitops.CreateWorktree(repoDir, "whis", "sel-test", "selective task", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gitops.RemoveWorktree(repoDir, sess.WorktreePath, sess.Branch, true)
+
+	srv.mu.Lock()
+	srv.sessions[sess.ID] = &ActiveSession{
+		Session: sess,
+		Status:  agent.StatusIdle,
+	}
+	srv.agentToSession["whis"] = sess.ID
+	srv.mu.Unlock()
+
+	// Modify both docA.txt and docB.txt in worktree
+	_ = os.WriteFile(filepath.Join(sess.WorktreePath, "docA.txt"), []byte("Whis docA mod\n"), 0644)
+	_ = os.WriteFile(filepath.Join(sess.WorktreePath, "docB.txt"), []byte("Whis docB mod\n"), 0644)
+
+	// Merge ONLY docA.txt via API, keeping worktree open
+	bodyJSON, _ := json.Marshal(map[string]any{
+		"sessionId":    sess.ID,
+		"files":        []string{"docA.txt"},
+		"keepWorktree": true,
+	})
+	req := httptest.NewRequest("POST", "/api/merge?t=test-token", bytes.NewReader(bodyJSON))
+	req.Header.Set("Content-Type", "application/json")
+	w := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK, got %d: %s", w.Code, w.Body.String())
+	}
+
+	var res struct {
+		Success      bool `json:"success"`
+		KeptWorktree bool `json:"keptWorktree"`
+	}
+	_ = json.NewDecoder(w.Body).Decode(&res)
+	if !res.Success || !res.KeptWorktree {
+		t.Fatalf("selective merge failed or did not keep worktree: %+v", res)
+	}
+
+	// Verify in main repository: docA is merged, docB is untouched!
+	mainA, _ := os.ReadFile(filepath.Join(repoDir, "docA.txt"))
+	mainB, _ := os.ReadFile(filepath.Join(repoDir, "docB.txt"))
+
+	if strings.TrimSpace(string(mainA)) != "Whis docA mod" {
+		t.Fatalf("expected main docA to be updated, got: %s", string(mainA))
+	}
+	if strings.TrimSpace(string(mainB)) != "Base B" {
+		t.Fatalf("expected main docB to remain untouched, got: %s", string(mainB))
+	}
+
+	// Verify session still exists in server because keepWorktree was true
+	srv.mu.RLock()
+	_, stillExists := srv.sessions[sess.ID]
+	srv.mu.RUnlock()
+	if !stillExists {
+		t.Fatalf("expected session to be kept when keepWorktree=true")
+	}
+}
+
+// Acceptance Test 7: CrewAI & Pane style 1-Click Peer Review & File Diff
+func TestAcceptance7_PeerReviewAndFileDiff(t *testing.T) {
+	srv, repoDir, configDir := setupTestServer(t)
+	defer os.RemoveAll(repoDir)
+	defer os.RemoveAll(configDir)
+
+	// Create worktree for agent 'whis'
+	sess, err := gitops.CreateWorktree(repoDir, "whis", "feature-x", "build feature x", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer gitops.RemoveWorktree(repoDir, sess.WorktreePath, sess.Branch, true)
+
+	srv.mu.Lock()
+	srv.sessions[sess.ID] = &ActiveSession{
+		Session: sess,
+		Status:  agent.StatusIdle,
+	}
+	srv.agentToSession["whis"] = sess.ID
+	srv.mu.Unlock()
+
+	// Modify file in worktree
+	modFile := filepath.Join(sess.WorktreePath, "feature.go")
+	_ = os.WriteFile(modFile, []byte("package main\nfunc Feature() {}\n"), 0644)
+
+	// 1. Test per-file diff endpoint
+	diffReq := httptest.NewRequest("GET", fmt.Sprintf("/api/changes/file-diff?t=test-token&sessionId=%s&file=feature.go", sess.ID), nil)
+	diffW := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(diffW, diffReq)
+
+	if diffW.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for file diff, got %d", diffW.Code)
+	}
+	var diffRes struct {
+		Diff string `json:"diff"`
+		File string `json:"file"`
+	}
+	_ = json.NewDecoder(diffW.Body).Decode(&diffRes)
+	if !strings.Contains(diffRes.Diff, "Feature()") {
+		t.Fatalf("expected diff to contain 'Feature()', got: %s", diffRes.Diff)
+	}
+
+	// 2. Test peer review dispatch
+	reviewBody, _ := json.Marshal(map[string]any{
+		"sourceSessionId": sess.ID,
+		"targetAgentId":   "opencode",
+		"reviewNotes":     "Check syntax and conventions",
+	})
+	revReq := httptest.NewRequest("POST", "/api/task/review?t=test-token", bytes.NewReader(reviewBody))
+	revReq.Header.Set("Content-Type", "application/json")
+	revW := httptest.NewRecorder()
+	srv.Handler().ServeHTTP(revW, revReq)
+
+	if revW.Code != http.StatusOK {
+		t.Fatalf("expected 200 OK for peer review, got %d: %s", revW.Code, revW.Body.String())
+	}
+
+	var revRes struct {
+		Session struct {
+			ID      string `json:"id"`
+			AgentID string `json:"agentId"`
+			Port    int    `json:"port"`
+		} `json:"session"`
+	}
+	_ = json.NewDecoder(revW.Body).Decode(&revRes)
+	if revRes.Session.AgentID != "opencode" {
+		t.Fatalf("expected reviewer agent to be 'opencode', got: %s", revRes.Session.AgentID)
+	}
+	if revRes.Session.Port <= 3100 {
+		t.Fatalf("expected dynamic allocated port > 3100, got: %d", revRes.Session.Port)
 	}
 }
