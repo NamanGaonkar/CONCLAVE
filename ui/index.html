@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CONCLAVE - Multi-Agent Desktop Hub</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="ember-theme">
+  <!-- Top Navigation Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="brand">
+        <span class="brand-glyph">⬡</span>
+        <span class="brand-name">CONCLAVE</span>
+      </div>
+      <div class="project-indicator" id="project-indicator" title="Click to switch project folder">
+        <span class="icon-folder">📁</span>
+        <span class="project-name" id="project-name">No Project Open</span>
+        <span class="branch-badge hidden" id="branch-badge">main</span>
+      </div>
+    </div>
+
+    <div class="topbar-center">
+      <div class="overlap-banner hidden" id="overlap-banner">
+        <span class="icon-warning">⚠️</span>
+        <span id="overlap-text">File Overlap Detected</span>
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <button class="btn btn-ghost" id="btn-palette" title="Command Palette (Ctrl+K)">
+        <span class="kbd">Ctrl+K</span>
+      </button>
+      <button class="btn btn-ghost" id="btn-shortcuts" title="Keyboard Shortcuts (?)">
+        <span class="kbd">?</span>
+      </button>
+      <button class="btn btn-ghost" id="btn-settings" title="Agent Settings">
+        ⚙ Agents
+      </button>
+    </div>
+  </header>
+
+  <!-- Empty State Overlay (when no repo is open) -->
+  <div class="empty-state-overlay" id="empty-state-overlay">
+    <div class="empty-state-card">
+      <div class="empty-state-glyph">⬡</div>
+      <h2>Welcome to Conclave</h2>
+      <p>Isolated Git Worktrees for Autonomous CLI Coding Agents</p>
+      <div class="empty-state-actions">
+        <input type="text" id="project-path-input" class="input input-lg" placeholder="C:\path\to\your\project">
+        <div class="btn-group">
+          <button class="btn btn-primary btn-lg" id="btn-open-project">Open Project Folder</button>
+          <button class="btn btn-secondary btn-lg hidden" id="btn-init-repo">Git Init & Continue</button>
+        </div>
+      </div>
+      <p class="empty-state-hint" id="empty-state-hint">Select a local directory with a Git repository.</p>
+    </div>
+  </div>
+
+  <!-- Main 3-Column Layout -->
+  <main class="app-layout" id="app-layout">
+    <!-- Left Column: Agents Sidebar -->
+    <aside class="col-sidebar" id="col-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">AGENTS</span>
+        <button class="btn-icon" id="btn-add-agent" title="Add Custom Agent">+</button>
+      </div>
+      <div class="all-agents-item active" id="item-all-agents" data-agent-id="all">
+        <span class="agent-dot dot-all"></span>
+        <div class="agent-info">
+          <span class="agent-label">All Agents</span>
+          <span class="agent-sub">Unified Stream</span>
+        </div>
+      </div>
+      <div class="agents-list" id="agents-list">
+        <!-- Dynamically rendered agents -->
+      </div>
+    </aside>
+
+    <!-- Resizable Splitter 1 -->
+    <div class="resizer" id="resizer-1"></div>
+
+    <!-- Center Column: Chat & Composer -->
+    <section class="col-chat" id="col-chat">
+      <div class="chat-header">
+        <div class="chat-header-info">
+          <span class="active-agent-dot" id="header-agent-dot"></span>
+          <h2 class="active-agent-name" id="header-agent-name">All Agents</h2>
+          <span class="active-agent-branch" id="header-agent-branch"></span>
+        </div>
+        <div class="chat-header-actions">
+          <button class="btn btn-xs btn-outline hidden" id="btn-redirect-toggle">⟳ Redirect Task</button>
+          <button class="btn btn-xs btn-ghost" id="btn-toggle-raw-logs">Logs ▾</button>
+        </div>
+      </div>
+
+      <!-- Redirect Drawer (Stage 5) -->
+      <div class="redirect-drawer hidden" id="redirect-drawer">
+        <div class="redirect-header">
+          <span class="redirect-title">Mid-Task Redirect</span>
+          <button class="btn-icon-xs" id="btn-close-redirect">✕</button>
+        </div>
+        <div class="redirect-body">
+          <textarea id="redirect-input" class="input" placeholder="Type new instructions or direction for the agent..."></textarea>
+          <div class="redirect-actions">
+            <label class="redirect-mode-option" title="Delivers instruction into agent standard input at next prompt">
+              <input type="radio" name="redirect-mode" value="soft" checked>
+              <span><strong>Soft Redirect:</strong> Queue message to stdin</span>
+            </label>
+            <label class="redirect-mode-option" title="Interrupts agent, commits checkpoint, summarizes diff, restarts in same worktree">
+              <input type="radio" name="redirect-mode" value="hard">
+              <span><strong>Hard Redirect:</strong> Checkpoint commit & restart with brief</span>
+            </label>
+            <button class="btn btn-primary btn-sm" id="btn-execute-redirect">Execute Redirect</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Messages Stream -->
+      <div class="chat-messages" id="chat-messages">
+        <!-- Chat bubbles & activity cards -->
+      </div>
+
+      <!-- Raw Logs Drawer -->
+      <div class="raw-logs-drawer hidden" id="raw-logs-drawer">
+        <div class="raw-logs-header">
+          <span>RAW PROCESS OUTPUT</span>
+          <button class="btn-icon-xs" id="btn-close-logs">✕</button>
+        </div>
+        <pre class="raw-logs-content" id="raw-logs-content">No logs available.</pre>
+      </div>
+
+      <!-- Composer Bar -->
+      <footer class="chat-composer">
+        <!-- Optional File Scope Row -->
+        <div class="composer-scope-row hidden" id="composer-scope-row">
+          <span class="scope-label">File Scope (globs):</span>
+          <input type="text" id="input-file-scope" class="input input-sm" placeholder="e.g. src/*, pkg/agent/**, *.go">
+        </div>
+
+        <div class="composer-input-wrapper">
+          <textarea id="composer-input" class="composer-textarea" rows="2" placeholder="Send a task or message (use @agent to target, Up-arrow for history)..."></textarea>
+          <div class="composer-actions">
+            <button class="btn btn-ghost btn-xs" id="btn-toggle-scope" title="Declare file scope (globs)">🎯 Scope</button>
+            <button class="btn btn-ghost btn-xs" id="btn-multi-agent" title="Send to multiple agents">⬡ Multi-Agent</button>
+            <button class="btn btn-primary" id="btn-send">Send ↵</button>
+          </div>
+        </div>
+
+        <!-- Multi-agent selection popup -->
+        <div class="multi-agent-popup hidden" id="multi-agent-popup">
+          <div class="multi-agent-title">Select Target Agents:</div>
+          <div class="multi-agent-checkboxes" id="multi-agent-checkboxes"></div>
+        </div>
+      </footer>
+    </section>
+
+    <!-- Resizable Splitter 2 -->
+    <div class="resizer" id="resizer-2"></div>
+
+    <!-- Right Column: Changes, Review & Merge (Stage 4) -->
+    <aside class="col-changes" id="col-changes">
+      <div class="changes-header">
+        <span class="changes-title">CHANGES & REVIEW</span>
+        <span class="changes-badge" id="changes-count">0 files</span>
+      </div>
+
+      <!-- Scope / Overlap Alerts in Changes panel -->
+      <div class="panel-alerts" id="panel-alerts"></div>
+
+      <!-- Changed files list -->
+      <div class="changed-files-list" id="changed-files-list">
+        <div class="empty-state-muted">No changes in this worktree yet.</div>
+      </div>
+
+      <!-- Diff Preview -->
+      <div class="diff-container">
+        <div class="diff-header">
+          <span id="diff-file-title">Unified Diff</span>
+          <button class="btn-icon-xs" id="btn-copy-diff" title="Copy diff">📋</button>
+        </div>
+        <pre class="diff-code" id="diff-code">Select a task with changes to view diff.</pre>
+      </div>
+
+      <!-- Merge / Review Actions (Stage 4) -->
+      <div class="changes-footer">
+        <button class="btn btn-primary btn-block" id="btn-merge-task">✓ Review & Merge</button>
+        <div class="btn-group-row">
+          <button class="btn btn-secondary btn-sm" id="btn-ask-review">Ask Agent to Review</button>
+          <button class="btn btn-danger btn-sm" id="btn-discard-task">Discard</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Command Palette Modal (Ctrl+K) -->
+  <div class="modal-overlay hidden" id="modal-palette">
+    <div class="modal-card">
+      <div class="modal-header">
+        <input type="text" id="palette-search" class="input input-lg" placeholder="Type a command or agent name...">
+      </div>
+      <div class="modal-body palette-list" id="palette-list">
+        <!-- Dynamically populated commands -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent Settings Modal -->
+  <div class="modal-overlay hidden" id="modal-agents">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <h3>Configure CLI Agents</h3>
+        <button class="btn-icon" id="btn-close-agents-modal">✕</button>
+      </div>
+      <div class="modal-body" id="agents-config-list">
+        <!-- Editable presets & custom agents -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" id="btn-modal-add-agent">+ Add New Agent</button>
+        <button class="btn btn-primary" id="btn-save-agents">Save Agents</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shortcuts Modal (?) -->
+  <div class="modal-overlay hidden" id="modal-shortcuts">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Keyboard Shortcuts</h3>
+        <button class="btn-icon" id="btn-close-shortcuts">✕</button>
+      </div>
+      <div class="modal-body shortcuts-grid">
+        <div class="shortcut-row"><span class="kbd">Ctrl+K</span><span>Open Command Palette</span></div>
+        <div class="shortcut-row"><span class="kbd">Ctrl+Enter</span><span>Send Message / Task</span></div>
+        <div class="shortcut-row"><span class="kbd">Up Arrow</span><span>Recall Previous Task History</span></div>
+        <div class="shortcut-row"><span class="kbd">?</span><span>Show Shortcuts Cheat Sheet</span></div>
+        <div class="shortcut-row"><span class="kbd">Esc</span><span>Close Dialogs / Overlays</span></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

@@ -4,13 +4,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"log"
+	"net"
+	"net/http"
 	"os"
+	"os/exec"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"conclave/pkg/agent"
+	"conclave/pkg/gitops"
+	"conclave/pkg/jobmgr"
+	"conclave/pkg/server"
 	"conclave/pkg/store"
+	"conclave/ui"
 )
 
 func main() {
@@ -19,19 +29,123 @@ func main() {
 		return
 	}
 
-	fmt.Println("=============================================================")
-	fmt.Println("  CONCLAVE - Multi-Agent Isolated Desktop Coding Hub")
-	fmt.Println("=============================================================")
-	fmt.Println("Commands:")
-	fmt.Println("  conclave probe      Probe installed CLI agents and record modes")
-	fmt.Println("  conclave            Launch CONCLAVE desktop application")
-	fmt.Println()
-
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage of conclave:\n")
-		flag.PrintDefaults()
-	}
+	portFlag := flag.Int("port", 4100, "Base port to listen on (127.0.0.1 only)")
+	dirFlag := flag.String("dir", "", "Initial project directory")
+	noOpenFlag := flag.Bool("no-open", false, "Do not launch desktop app window automatically")
 	flag.Parse()
+
+	cfgDir, err := store.AppDataDir()
+	if err != nil {
+		log.Fatalf("Failed to initialize AppData: %v", err)
+	}
+
+	// Setup Windows Job Object to kill all child processes on exit/crash
+	job, err := jobmgr.New()
+	if err == nil {
+		defer job.Close()
+	}
+
+	// Verify or resolve initial project directory
+	initialDir := *dirFlag
+	if initialDir != "" {
+		abs, err := filepath.Abs(initialDir)
+		if err == nil {
+			initialDir = abs
+		}
+	} else {
+		// Use current directory if it's a git repo
+		cwd, err := os.Getwd()
+		if err == nil && gitops.IsGitRepo(cwd) {
+			initialDir = cwd
+		}
+	}
+
+	port, err := pickFreePort(*portFlag)
+	if err != nil {
+		log.Fatalf("Port selection error: %v", err)
+	}
+
+	srv, err := server.New("", cfgDir, initialDir, ui.Assets)
+	if err != nil {
+		log.Fatalf("Server initialization failed: %v", err)
+	}
+
+	httpServer := &http.Server{
+		Addr:    fmt.Sprintf("127.0.0.1:%d", port),
+		Handler: srv.Handler(),
+	}
+
+	appURL := fmt.Sprintf("http://127.0.0.1:%d/?t=%s", port, srv.Token)
+	fmt.Printf("\n=============================================================\n")
+	fmt.Printf("  CONCLAVE Desktop Hub Running\n")
+	fmt.Printf("  URL:   %s\n", appURL)
+	fmt.Printf("  Bound: 127.0.0.1 (Token-Authenticated)\n")
+	fmt.Printf("=============================================================\n\n")
+
+	if !*noOpenFlag {
+		go func() {
+			time.Sleep(300 * time.Millisecond)
+			openDesktopWindow(appURL)
+		}()
+	}
+
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	errCh := make(chan error, 1)
+	go func() {
+		errCh <- httpServer.ListenAndServe()
+	}()
+
+	select {
+	case err := <-errCh:
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	case <-sig:
+		fmt.Println("\n[CONCLAVE] Shutting down...")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	_ = httpServer.Shutdown(ctx)
+	if job != nil {
+		_ = job.Close()
+	}
+	fmt.Println("[CONCLAVE] Clean exit. Child process trees terminated.")
+}
+
+func pickFreePort(base int) (int, error) {
+	for p := base; p < base+60; p++ {
+		ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", p))
+		if err == nil {
+			_ = ln.Close()
+			return p, nil
+		}
+	}
+	return 0, fmt.Errorf("no free port available near %d", base)
+}
+
+func openDesktopWindow(url string) {
+	candidates := []string{
+		filepath.Join(os.Getenv("ProgramFiles(x86)"), "Microsoft", "Edge", "Application", "msedge.exe"),
+		filepath.Join(os.Getenv("ProgramFiles"), "Microsoft", "Edge", "Application", "msedge.exe"),
+		"msedge.exe",
+		filepath.Join(os.Getenv("ProgramFiles"), "Google", "Chrome", "Application", "chrome.exe"),
+		filepath.Join(os.Getenv("ProgramFiles(x86)"), "Google", "Chrome", "Application", "chrome.exe"),
+	}
+
+	for _, cand := range candidates {
+		if fi, err := os.Stat(cand); err == nil && !fi.IsDir() {
+			cmd := exec.Command(cand, fmt.Sprintf("--app=%s", url), "--window-size=1440,900")
+			if err := cmd.Start(); err == nil {
+				return
+			}
+		}
+	}
+
+	// Fallback to start command
+	_ = exec.Command("cmd", "/c", "start", "", url).Start()
 }
 
 func runProbe() {
