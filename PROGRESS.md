@@ -18,7 +18,7 @@ Stack:
   - Multi-tier probing (non-interactive flag, server/API mode, hidden PTY/ConPTY fallback with output filtering).
   - `conclave probe` command.
   - User-defined agent definitions & editable presets in `agents.json`.
-- [ ] **Stage 2: Isolation & Git Worktree Engine**
+- [x] **Stage 2: Isolation & Git Worktree Engine**
   - Worktree creation at `conclave/<agent>/<task-slug>`.
   - Main repository protection (agents never run in main).
   - File scope globs enforcement & detection.
@@ -66,3 +66,20 @@ Stack:
     - `agy`: Mode `non-interactive` (v1.4.6)
     - `freebuff`: Mode `non-interactive` (v0.2.34)
     - Persisted into `C:\Users\Naman Gaonkar\AppData\Roaming\Conclave\agents.json`.
+
+### Stage 2: Isolation & Git Worktree Engine (Verified)
+- Implemented repository management (`pkg/gitops/repo.go`): `InitRepo`, `IsGitRepo`, `CurrentBranch`, `IsDirty`, auto-adding `.conclave/` to `.gitignore`.
+- Built worktree lifecycle engine (`pkg/gitops/worktree.go`):
+  - Every task creates a worktree at `.conclave/worktrees/<agent>-<slug>` on branch `conclave/<agent>/<slug>`.
+  - Agents run strictly within their designated worktree directory, never touching the main workspace folder.
+  - Checkpoint commits (`CommitCheckpoint`) stage changes and record git commit hashes for rollback and redirect.
+  - Worktree cleanup (`RemoveWorktree`) safely deletes worktrees and branches on discard or merge.
+- Built monitoring suite:
+  - File scope globs checker (`pkg/monitor/scope.go`): detects and flags out-of-scope edits.
+  - Overlap detector (`pkg/monitor/overlap.go`): real-time detection of multiple agents editing the same file across worktrees.
+  - Port conflict detector (`pkg/monitor/overlap.go`): alerts on port collision between concurrent agents.
+- Persistence (`pkg/store/sessions.go`): saves active sessions to `%APPDATA%\Conclave\sessions.json` so worktrees and sessions survive app restarts.
+- Tested and verified:
+  - `TestWorktreeIsolationAndOverlap` passed.
+  - Verified: Agent 1 (`opencode`) and Agent 2 (`whis`) edited `shared.txt` simultaneously in separate worktrees; baseline in main repository was untouched.
+  - Verified: Overlap detector alerted on `shared.txt` (2 agents); Port detector alerted on port collision (port 3000); Scope detector alerted on `src/secret.js`.
