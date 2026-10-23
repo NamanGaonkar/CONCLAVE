@@ -38,29 +38,29 @@ Conclave is **100% sovereign and private**:
 
 ## Key Features
 
-### 🏢 2D Virtual Office Canvas
+### 2D Virtual Office Canvas
 - High-performance **Pixi.js** isometric office floor with animated characters, desks, and ambient status.
 - Visually inspect which agent is idle, thinking, running commands, reading files, or requesting user feedback.
 
-### 🎮 Command Center & Hive Orchestrator
+### Command Center & Hive Orchestrator
 - Centralized briefing terminal to instruct an orchestrator agent that plans, assigns, and oversees tasks.
 - Spawns parallel worker agents in the background to tackle subtasks simultaneously.
 
-### 🛡️ Git Worktree Isolation
+### Git Worktree Isolation
 - Each background worker executes in its own dedicated Git worktree.
 - Agents make changes, run tests, and commit independently without touching or polluting your working branch.
 - Automated merge and conflict resolution workflows.
 
-### 🧠 Persistent Local Memory Graph
+### Persistent Local Memory Graph
 - Powered by local **SQLite** (`better-sqlite3`).
 - Tracks files modified, decisions made, lessons learned, and session summaries across agent lifecycles.
 - Agents retrieve relevant past context when starting new tasks.
 
-### ⚡ Built-in Terminal & Monaco IDE
+### Built-in Terminal & Monaco IDE
 - Deep integration with **xterm.js** and **Monaco Editor**.
 - Focus mode lets you drill directly into an agent's terminal stream or inspect modified code side-by-side with full syntax highlighting.
 
-### 👥 Shareable Agent Hires & Presets
+### Shareable Agent Hires & Presets
 - Pre-configured roles for software engineering, code review, security audits, architecture, and testing.
 - Define custom prompt templates, system instructions, and capability flags per seat.
 
@@ -95,8 +95,8 @@ Conclave integrates with any CLI-based agent tool installed in your environment:
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/conclave-ai/conclave.git
-   cd conclave
+   git clone https://github.com/NamanGaonkar/CONCLAVE.git
+   cd CONCLAVE
    ```
 
 2. **Install dependencies**:
