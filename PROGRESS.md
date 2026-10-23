@@ -110,6 +110,7 @@ Stack:
 - Process tree termination via Windows Job Object (`pkg/jobmgr/jobmgr_windows.go`) with `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE`.
 - State persistence in `%APPDATA%\Conclave\sessions.json` and `%APPDATA%\Conclave\agents.json`.
 - Production build: `conclave.exe` and `conclave-gui.exe` compiled with `-ldflags="-s -w"` and embedded Windows icon and manifest.
+- Desktop UI Branding: High-DPI amber gold icon embedded in executable PE resources, window favicon, and topbar logo mark.
 - Comprehensive Acceptance Tests (`pkg/server/acceptance_test.go`):
   1. `TestAcceptance1_IsolationAndOverlap`: Verified separate worktrees, main untouched, overlap detected (PASS).
   2. `TestAcceptance2_MergeAndConflict`: Verified first branch merges cleanly, second branch reports conflict and never overwrites (PASS).
