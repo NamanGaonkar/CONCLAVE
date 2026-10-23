@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="./build/icon.svg" alt="Conclave Logo" width="140">
+<img src="./logo.png" alt="Conclave Logo" width="160">
 
 # Conclave
 

@@ -1,12 +1,13 @@
-# Conclave v0.4.6
+# Conclave v0.4.7
 
 **A local hive of Claude Code, Antigravity, Codex, Gemini, Cursor, Grok & Copilot agents that run themselves.**
 Autonomous multi-agent orchestration, messaging, routing, and memory graph, running completely local-first and offline on your machine.
 
 ---
 
-## What's new in Conclave v0.4.6
+## What's new in Conclave v0.4.7
 
+- **Official Conclave Brand Logo & Icons:** Integrated the official high-resolution Conclave logo across the desktop executable icon (`.ico`), application icon (`.png`), in-app toolbar, and documentation.
 - **Multi-Agent Orchestration & Hivemind:** Full local office view running autonomous agents side-by-side with shared state and real-time terminal views.
 - **Complete Local-First Privacy:** Zero remote telemetry, zero analytics tracking, and zero external dependency phone-homes. 100% private to your machine.
 - **Interactive ConPTY Terminals:** High-performance Windows ConPTY terminal integration with direct agent process multiplexing.
@@ -18,4 +19,4 @@ Autonomous multi-agent orchestration, messaging, routing, and memory graph, runn
 ---
 
 ### Windows Installer
-Download `Conclave-0.4.6-win-x64-setup.exe` below and run it to install Conclave on Windows.
+Download `Conclave-0.4.7-win-x64-setup.exe` below and run it to install or update Conclave on Windows.
