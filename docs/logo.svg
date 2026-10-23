@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0B0D17"/>
+      <stop offset="50%" stop-color="#121626"/>
+      <stop offset="100%" stop-color="#07090F"/>
+    </linearGradient>
+    <linearGradient id="strokeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#818CF8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#C084FC" stop-opacity="0.2"/>
+    </linearGradient>
+    <linearGradient id="coreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00F2FE"/>
+      <stop offset="40%" stop-color="#38BDF8"/>
+      <stop offset="80%" stop-color="#6366F1"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="accentGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="24" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="40" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+    <clipPath id="squircleClip">
+      <rect x="32" y="32" width="960" height="960" rx="210" ry="210" />
+    </clipPath>
+  </defs>
+
+  <!-- Background tile -->
+  <g clip-path="url(#squircleClip)">
+    <rect x="32" y="32" width="960" height="960" fill="url(#bgGrad)" />
+    
+    <!-- Outer squircle border -->
+    <rect x="32" y="32" width="960" height="960" rx="210" ry="210" fill="none" stroke="url(#strokeGrad)" stroke-width="12" />
+
+    <!-- Ambient background glow behind emblem -->
+    <circle cx="512" cy="512" r="280" fill="#6366F1" opacity="0.12" filter="url(#softGlow)" />
+    <circle cx="512" cy="512" r="160" fill="#00F2FE" opacity="0.15" filter="url(#glow)" />
+
+    <!-- Orbital Conclave Nexus Network -->
+    <!-- Hexagonal network linking agent seats -->
+    <polygon points="512,232 754,372 754,652 512,792 270,652 270,372"
+             fill="none" stroke="#2A3352" stroke-width="6" stroke-dasharray="14 10" opacity="0.8" />
+             
+    <!-- Inner spoke lines converging to conclave core -->
+    <line x1="512" y1="232" x2="512" y2="350" stroke="#38BDF8" stroke-width="5" opacity="0.6"/>
+    <line x1="754" y1="372" x2="650" y2="432" stroke="#6366F1" stroke-width="5" opacity="0.6"/>
+    <line x1="754" y1="652" x2="650" y2="592" stroke="#818CF8" stroke-width="5" opacity="0.6"/>
+    <line x1="512" y1="792" x2="512" y2="674" stroke="#A855F7" stroke-width="5" opacity="0.6"/>
+    <line x1="270" y1="652" x2="374" y2="592" stroke="#38BDF8" stroke-width="5" opacity="0.6"/>
+    <line x1="270" y1="372" x2="374" y2="432" stroke="#00F2FE" stroke-width="5" opacity="0.6"/>
+
+    <!-- Orbital Agent Node Circles -->
+    <circle cx="512" cy="232" r="26" fill="#0F172A" stroke="#38BDF8" stroke-width="8" />
+    <circle cx="512" cy="232" r="10" fill="#38BDF8" />
+
+    <circle cx="754" cy="372" r="24" fill="#0F172A" stroke="#6366F1" stroke-width="8" />
+    <circle cx="754" cy="372" r="9" fill="#6366F1" />
+
+    <circle cx="754" cy="652" r="24" fill="#0F172A" stroke="#818CF8" stroke-width="8" />
+    <circle cx="754" cy="652" r="9" fill="#818CF8" />
+
+    <circle cx="512" cy="792" r="26" fill="#0F172A" stroke="#A855F7" stroke-width="8" />
+    <circle cx="512" cy="792" r="10" fill="#A855F7" />
+
+    <circle cx="270" cy="652" r="24" fill="#0F172A" stroke="#38BDF8" stroke-width="8" />
+    <circle cx="270" cy="652" r="9" fill="#38BDF8" />
+
+    <circle cx="270" cy="372" r="24" fill="#0F172A" stroke="#00F2FE" stroke-width="8" />
+    <circle cx="270" cy="372" r="9" fill="#00F2FE" />
+
+    <!-- Centerpiece: Bold Futuristic Conclave "C" Emblem -->
+    <!-- The outer dynamic C arc -->
+    <path d="M 640 370 
+             C 610 340 565 320 512 320 
+             C 406 320 320 406 320 512 
+             C 320 618 406 704 512 704 
+             C 565 704 610 684 640 654
+             L 600 600
+             C 578 622 547 636 512 636
+             C 443 636 388 581 388 512
+             C 388 443 443 388 512 388
+             C 547 388 578 402 600 424
+             Z"
+          fill="url(#coreGrad)" filter="url(#glow)" />
+
+    <!-- Center Radiant Core Prism / Diamond -->
+    <polygon points="512,460 556,512 512,564 468,512" fill="#FFFFFF" opacity="0.95" filter="url(#glow)"/>
+    <circle cx="512" cy="512" r="8" fill="#00F2FE" />
+  </g>
+</svg>
