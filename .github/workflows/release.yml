@@ -59,7 +59,7 @@ jobs:
       - name: Package installers
         # GH_TOKEN lets electron-builder skip its own publish; we upload via the
         # release step below for full control over the asset set.
-        run: npx electron-builder ${{ matrix.args }} --publish never
+        run: node tools/package.cjs ${{ matrix.args }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # macOS code signing + notarization — MUST be macOS-only. CSC_LINK is the
