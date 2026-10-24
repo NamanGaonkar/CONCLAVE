@@ -8,8 +8,8 @@ copyright: Copyright © 2026 Conclave Team
 # knows which repo to poll.
 publish:
   provider: github
-  owner: conclave-ai
-  repo: conclave
+  owner: NamanGaonkar
+  repo: CONCLAVE
 
 # Bake the update toast's "What's new" list straight into latest*.yml.
 #

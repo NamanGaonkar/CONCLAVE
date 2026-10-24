@@ -1,5 +1,5 @@
-- **The interface speaks Chinese and Arabic.** Set it in Settings.
-- **Updates install themselves.** Download, restart, done.
-- **Fonts ship inside the app.** No Google Fonts fetch on launch.
-- **Hardened how engine commands launch.**
-- **Settings has one Save button.** Connections get their own tab.
+- **Branch Metro View:** Vector SVG transit map replacing the pixel canvas.
+- **Ember Dark Theme:** Sleek dark palette with warm amber accents.
+- **Lato Typography:** Modern bundled Lato font across all screens.
+- **Live Animated Trains:** Working agents glide dynamically along lines.
+- **Junction Conflict Signals:** Red transit signals for merges and blocked tasks.

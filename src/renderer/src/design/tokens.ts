@@ -1,54 +1,52 @@
-// Design tokens — single source of truth. Mirrors tokens.css for non-styled consumers (Pixi).
-// Any change here must also update tokens.css.
+// Design tokens — single source of truth. Mirrors tokens.css for non-styled consumers.
 
 export const colors = {
   cream: {
-    50: 0xfffdf5,
-    100: 0xfff8e7,
-    200: 0xf4e9c7,
-    300: 0xe8d9a0
+    50: 0x0c0a07,
+    100: 0x14110c,
+    200: 0x1b1710,
+    300: 0x241e15
   },
   paper: {
-    100: 0xfcfaf0,
-    200: 0xf0ead2
+    100: 0x14110c,
+    200: 0x1b1710
   },
   ink: {
-    900: 0x1a1320,
-    700: 0x3d2e4a,
-    500: 0x6b5878,
-    300: 0xa899b5,
-    100: 0xd9cfe0
+    900: 0xf5edd8,
+    700: 0xd8ceb8,
+    500: 0x9e937d,
+    300: 0x2a2417,
+    100: 0x1d1810
   },
-  // v0.3.4 recalibration: same hues, professional saturation (mirrors tokens.css)
   accent: {
-    coral: 0xd96a62,
-    coralLight: 0xf3d3cd,
-    mint: 0x5ca97a,
-    mintLight: 0xd2e7da,
-    sky: 0x4f9faf,
-    skyLight: 0xcfe5e9,
-    lemon: 0xdcab3c,
-    lemonLight: 0xf3e4bc,
-    lilac: 0x9482d3,
-    lilacLight: 0xe0daf2,
-    peach: 0xd99168,
-    peachLight: 0xf3daca
+    coral: 0xe06d53,
+    coralLight: 0x321b17,
+    mint: 0x48b57d,
+    mintLight: 0x162e21,
+    sky: 0x55a6bf,
+    skyLight: 0x172a32,
+    lemon: 0xf5af28,
+    lemonLight: 0x2a1f0b,
+    lilac: 0x9d85d6,
+    lilacLight: 0x251e33,
+    peach: 0xe09253,
+    peachLight: 0x322116
   },
   status: {
-    idle: 0xa199ab,
-    thinking: 0x4f9faf,
-    working: 0xdcab3c,
-    blocked: 0xd96a62,
-    success: 0x5ca97a,
-    ghost: 0xd9d3de
+    idle: 0x7a7263,
+    thinking: 0x55a6bf,
+    working: 0xf5af28,
+    blocked: 0xe06d53,
+    success: 0x48b57d,
+    ghost: 0x5c5547
   },
   world: {
-    grassLight: 0xd4eab0,
-    grassDark: 0xb5d589,
-    woodLight: 0xe5c896,
-    woodDark: 0xc9a66b,
-    path: 0xe8d8b0,
-    wall: 0x8b6f47
+    grassLight: 0x14110c,
+    grassDark: 0x0c0a07,
+    woodLight: 0x1b1710,
+    woodDark: 0x14110c,
+    path: 0x241e15,
+    wall: 0x2a2417
   }
 } as const;
 
@@ -57,12 +55,12 @@ export const space = {
 } as const;
 
 export const type = {
-  display: '"Press Start 2P", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Geeza Pro", "Noto Naskh Arabic", "Segoe UI Historic", monospace',
-  ui: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", "Geeza Pro", "Noto Naskh Arabic", "Segoe UI Historic", sans-serif',
-  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, "PingFang SC", "Microsoft YaHei", "Noto Sans Mono CJK SC", "Noto Sans CJK SC", "Geeza Pro", "Noto Naskh Arabic", "Segoe UI Historic", monospace'
+  display: '"Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+  ui: '"Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
+  mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace'
 } as const;
 
-export const tileSize = 32; // px — the world is built from 32×32 tiles
+export const tileSize = 32;
 
 export type AccentColorName =
   | 'coral' | 'mint' | 'sky' | 'lemon' | 'lilac' | 'peach';

@@ -82,7 +82,7 @@
     "steerAria": "Send this agent a note"
   },
   "agentCard": {
-    "boss": "BOSS",
+    "boss": "lead",
     "contextTitle": "Context: {{used}} / {{limit}} tokens ({{pct}}%)",
     "contextGaugeTitle": "Context gauge — fills once the agent reports activity",
     "doingTasks": "actively working {{count}} task — click to open",
@@ -149,7 +149,7 @@
     "fullscreenDesc": "This terminal is open in focus mode. Press Esc or exit focus mode to bring it back here.",
     "noPty": "No PTY",
     "noPtyDesc": "This agent has no live terminal. Spawn an agent through \"add agent\" to use the terminal tab.",
-    "killConfirm": "Close {{name}}? The PTY process will terminate and the agent is archived (kept in history, off the floor).",
+    "killConfirm": "Close {{name}}? The PTY process will terminate and the agent is arcconclaved (kept in history, off the floor).",
     "ideTip": "Open the IDE: browse and edit files in {{project}}, and see uncommitted changes as a diff.",
     "terminalTip": "Open your system terminal app in {{cwd}} — a normal shell in this agent's folder, separate from the agent's own terminal.",
     "openIde": "Open the IDE",
@@ -216,12 +216,12 @@
     "changeHome": {
       "newHome": "New home folder",
       "moveTitle": "Move existing data (recommended)",
-      "moveDesc": "Copy this harness's hive (every agent, memory, task) and the semantic-memory palace into the new folder. The old folder is left untouched as a backup you can delete later.",
+      "moveDesc": "Copy this harness's conclave (every agent, memory, task) and the semantic-memory palace into the new folder. The old folder is left untouched as a backup you can delete later.",
       "freshTitle": "Start fresh",
       "freshDesc": "Point the harness at the new (empty) folder. Your existing data stays in the old folder, simply unused."
     },
     "resetConfirm": {
-      "body": "This permanently erases all of {{godName}}'s memories and the entire hive, and cannot be undone. Any running sessions will be terminated and the app will relaunch into onboarding. Are you sure?"
+      "body": "This permanently erases all of {{godName}}'s memories and the entire conclave, and cannot be undone. Any running sessions will be terminated and the app will relaunch into onboarding. Are you sure?"
     },
     "general": {
       "homeFolder": "Home folder",
@@ -243,7 +243,7 @@
       "language": "Language",
       "languageDesc": "Choose the language for the app interface. English is the default.",
       "dangerZone": "DANGER ZONE",
-      "dangerDesc": "Reset wipes {{godName}}'s memories, the entire hive (every agent, message, task, and the board), the semantic-memory palace, and all settings - then takes you back to onboarding.",
+      "dangerDesc": "Reset wipes {{godName}}'s memories, the entire conclave (every agent, message, task, and the board), the semantic-memory palace, and all settings - then takes you back to onboarding.",
       "resetStartOver": "reset & start over",
       "arabicTerminal": "Arabic / RTL text in terminals",
       "arabicTerminalDesc": "Renders terminals with the browser's text engine so Arabic joins and reads right-to-left (xterm has no bidi of its own). Off is the GPU renderer: faster, but RTL-blind. Applies to open terminals and new ones alike.",
@@ -397,7 +397,7 @@
       "graph": "graph",
       "activity": "activity",
       "skills": "skills",
-      "workers": "workers"
+      "workers": "agents"
     },
     "terminalFullscreen": "Terminal is open in fullscreen. Press Esc to bring it back.",
     "noTerminal": "{{name}} has no live terminal.",
@@ -429,7 +429,7 @@
     "apply": "apply",
     "confirmRestartEngine": "This restarts {{name}}; a conversation on a different engine can't be resumed.",
     "restartFailed": "Restart failed.",
-    "archived": "ARCHIVED ({{count}})",
+    "archived": "ARCconclaveD ({{count}})",
     "showClosed": "show closed agents",
     "hideClosed": "hide closed agents",
     "directories": "DIRECTORIES",
@@ -443,11 +443,11 @@
     "noIssues": "No issues fetched yet.",
     "assign": "Assign",
     "textSearch": "TEXT SEARCH (board, tasks, memory)",
-    "textSearchPlaceholder": "Find exact text across hive files…",
+    "textSearchPlaceholder": "Find exact text across conclave files…",
     "nothingMatched": "Nothing matched.",
     "searchNoMatch": "Nothing matched yet.",
     "semanticSearch": "SEMANTIC SEARCH (MemPalace)",
-    "semanticPlaceholder": "What does the hive know about…",
+    "semanticPlaceholder": "What does the conclave know about…",
     "memoryFile": "MEMORY FILE",
     "noMemory": "No memory recorded yet.",
     "activity": "ACTIVITY",
@@ -601,8 +601,8 @@
     },
     "welcome": {
       "headline": "YOUR CLONE AND THE FLOOR IT RUNS",
-      "descPlain": "Your clone runs a small office of AI workers, and you watch it all from one screen. Here's what's inside:",
-      "desc": "Your clone coordinates a hive of AI coding agents — persistent, watchable, all local. Here's what's inside:",
+      "descPlain": "Your clone runs a small office of AI agents, and you watch it all from one screen. Here's what's inside:",
+      "desc": "Your clone coordinates a conclave of AI coding agents — persistent, watchable, all local. Here's what's inside:",
       "features": {
         "engines": {
           "label": "ELEVEN ENGINES, ONE OFFICE",
@@ -654,13 +654,13 @@
       "note": "Think of this as the \"town hall.\" The harness pins agent state there so sessions can be picked back up after a restart."
     },
     "orchestrator": {
-      "descPlain": "{{godName}} is your clone — he reads your requests, breaks them into tasks, and hands them to the right agent. He's the boss of the floor; you're still the boss of him. Choose which AI engine powers him.",
-      "desc": "{{godName}} is your clone — the boss of the floor you just met. He triages your requests, assigns tasks, and manages the team, while escalating anything that genuinely needs you. Pick the engine and model that power him; give him a longer-context, higher-capability model.",
+      "descPlain": "{{godName}} is your clone — he reads your requests, breaks them into tasks, and hands them to the right agent. He's the lead of the network; you're still the lead of him. Choose which AI engine powers him.",
+      "desc": "{{godName}} is your clone — the lead of the network you just met. He triages your requests, assigns tasks, and manages the team, while escalating anything that genuinely needs you. Pick the engine and model that power him; give him a longer-context, higher-capability model.",
       "cliAgentPlain": "A <strong>CLI agent</strong> is an AI coding assistant that runs on your computer — popular ones are Claude Code (Anthropic), Codex (OpenAI) and Antigravity (Google Gemini). <strong>Your clone</strong> is the always-on one that runs your whole office. We recommend Claude Code on Opus 4.8 (1M). You can add or switch the others later.",
-      "cliAgent": "Each option is a <strong>CLI engine</strong> (Claude Code, Codex, Antigravity/Gemini, or a local proxy like Qwen). Engines marked INSTALLED are already on this machine; INSTALLS ON FIRST RUN means the app sets it up when {{godName}} first starts. <strong>Your clone</strong> ({{godName}}) is the engine that orchestrates the whole hive. Recommended: Claude Code · Opus 4.8 · 1M. Other providers can be wired per agent later.",
+      "cliAgent": "Each option is a <strong>CLI engine</strong> (Claude Code, Codex, Antigravity/Gemini, or a local proxy like Qwen). Engines marked INSTALLED are already on this machine; INSTALLS ON FIRST RUN means the app sets it up when {{godName}} first starts. <strong>Your clone</strong> ({{godName}}) is the engine that orchestrates the whole conclave. Recommended: Claude Code · Opus 4.8 · 1M. Other providers can be wired per agent later.",
       "recommended": "RECOMMENDED",
-      "workersOnly": "WORKERS ONLY",
-      "workersOnlyHint": "Can't drain hive mail yet, so it can't run your clone — still available when hiring workers.",
+      "workersOnly": "agents ONLY",
+      "workersOnlyHint": "Can't drain conclave mail yet, so it can't run your clone — still available when hiring agents.",
       "model": "Model",
       "modelNote": "This only sets {{godName}}'s engine. You can run other providers per agent later."
     },
@@ -741,24 +741,24 @@
       ],
       "smoke": [
         "the floor runs itself 🚬",
-        "boss break.",
+        "lead break.",
         "thinking big thoughts 🚬",
         "I DECLARE… a break"
       ]
     },
     "suckUp": [
       "already shipped {{done}} tasks, {{godName}}. raise? 🥺",
-      "{{done}} tasks done this week, boss!",
-      "great vision as always, boss!",
+      "{{done}} tasks done this week, lead!",
+      "great vision as always, lead!",
       "I was JUST about to do exactly that!",
       "love the tie today, {{godName}}",
-      "working hard, boss! 💪",
-      "best boss ever. genuinely."
+      "working hard, lead! 💪",
+      "best lead ever. genuinely."
     ],
     "gossip": [
       "has he ever actually written code?",
       "another 'quick sync' that took an hour…",
-      "'world's best boss' — he bought that mug himself",
+      "'world's best lead' — he bought that mug himself",
       "he pinned MY task as his idea",
       "the cigar smell, honestly…",
       "he watered the plant. ONE plant. his own.",
@@ -1021,7 +1021,7 @@
     "emptyMessage": "(empty message)",
     "showLess": "show less",
     "showAll": "show all {{count}} characters",
-    "tailRejected": "You turned this down. Nothing was sent to the hive.",
+    "tailRejected": "You turned this down. Nothing was sent to the conclave.",
     "tailNoReply": "No reply yet. {{godName}} has this one.",
     "waitingForYou": "WAITING FOR YOU",
     "unnamedSource": "unnamed source",
@@ -1031,7 +1031,7 @@
     "theySent": "THEY SENT",
     "weReplied": "WE REPLIED",
     "weSent": "WE SENT",
-    "pendingDirectiveDesc": "Approve and this goes to {{godName}}, who will put the hive to work on it. Reject and it is dropped — nothing runs.",
+    "pendingDirectiveDesc": "Approve and this goes to {{godName}}, who will put the conclave to work on it. Reject and it is dropped — nothing runs.",
     "pendingDesc": "Approve and {{godName}} reads this. Reject and it is dropped — nothing runs.",
     "approveTitle": "Send this message through to {{godName}}",
     "oneSec": "one sec…",
@@ -1103,7 +1103,7 @@
     "contextTitle": "Context: {{used}} / {{limit}} tokens ({{pct}}%)",
     "modelTitle": "Model: {{model}}",
     "cliDefault": "CLI default",
-    "closeAgent": "Close {{name}} — ends the process and archives the agent",
+    "closeAgent": "Close {{name}} — ends the process and arcconclaves the agent",
     "ideTip": "Open the IDE: browse and edit files in {{name}}'s workspace, and see their uncommitted changes as a diff.",
     "openIdeAria": "Open the IDE",
     "openTerminalTip": "Open your system terminal app in {{cwd}} — a normal shell in this agent's folder, separate from the agent's own terminal.",
@@ -1113,7 +1113,7 @@
     "pill": "🧠 memory",
     "pillActive": "🧠 memory",
     "openTitle": "Search the shared memory your agents build up",
-    "title": "HIVE MEMORY",
+    "title": "conclave MEMORY",
     "intro": "What your agents remember across sessions, shared between them. Search it by meaning, not just exact words.",
     "notSetUp": "Not set up",
     "onReady": "On · ready",
@@ -1174,13 +1174,13 @@
   "workersTab": {
     "stopping": "stopping",
     "working": "working",
-    "liveWorkers": "Live workers",
-    "liveIntro": "Isolated workers {{godName}} spins up to handle Slack messages — they run to completion, reply in-thread, then tear down.",
-    "noneRunning": "No workers running right now.",
+    "liveWorkers": "Live agents",
+    "liveIntro": "Isolated agents {{godName}} spins up to handle Slack messages — they run to completion, reply in-thread, then tear down.",
+    "noneRunning": "No agents running right now.",
     "repliesToSlack": "replies to a Slack thread",
     "stoppingEllipsis": "stopping…",
     "stop": "stop",
-    "workerIdTitle": "worker / PTY id",
+    "workerIdTitle": "agent / PTY id",
     "baseBranchTitle": "base branch the worktree was cut from",
     "base": "base: {{branch}}",
     "upSinceTitle": "time since spawn",
@@ -1192,7 +1192,7 @@
     "tokens": "tokens {{value}}",
     "uncapped": "uncapped",
     "preserved": "Preserved worktrees ({{count}})",
-    "preservedIntro": "Finished workers whose worktree held un-integrated work — kept (never auto-discarded) and auto-reclaimed once the work lands in its base branch.",
+    "preservedIntro": "Finished agents whose worktree held un-integrated work — kept (never auto-discarded) and auto-reclaimed once the work lands in its base branch.",
     "keptAgo": "kept {{age}} ago"
   },
   "memoryGraph": {
@@ -1254,12 +1254,12 @@
     "availability": "Availability",
     "enabled": "enabled",
     "disabled": "disabled",
-    "availableToAll": "✓ Available to all workers",
-    "notAvailableYet": "Not available to workers yet",
+    "availableToAll": "✓ Available to all agents",
+    "notAvailableYet": "Not available to agents yet",
     "addSecretToEnable": "Add a secret and enable to make it available.",
     "readyOnceSaved": "Ready once saved.",
-    "disabledNoUse": "Disabled — no worker can use it.",
-    "v1Note": "v1 grants every enabled integration to all workers. Per-worker scoping is coming.",
+    "disabledNoUse": "Disabled — no agent can use it.",
+    "v1Note": "v1 grants every enabled integration to all agents. Per-agent scoping is coming.",
     "testConnection": "Test connection",
     "testing": "testing…",
     "testAfterSave": "Save the integration first, then test the live connection.",
@@ -1271,7 +1271,7 @@
     "addIntegration": "add integration",
     "empty": "No integrations yet. Connect GitHub or a custom REST API so your agents can use it.",
     "addFirst": "add your first integration",
-    "count": "{{count}} integrations · {{usable}} available to workers",
+    "count": "{{count}} integrations · {{usable}} available to agents",
     "needsSecretShort": "Needs secret",
     "test": "test",
     "edit": "edit"
