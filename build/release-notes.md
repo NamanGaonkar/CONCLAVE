@@ -1,5 +1,5 @@
-- **Branch Metro View:** Vector SVG transit map replacing the pixel canvas.
-- **Ember Dark Theme:** Sleek dark palette with warm amber accents.
-- **Lato Typography:** Modern bundled Lato font across all screens.
-- **Live Animated Trains:** Working agents glide dynamically along lines.
-- **Junction Conflict Signals:** Red transit signals for merges and blocked tasks.
+- **Virtual Pixel Office Restored:** Re-enabled the interactive pixel office with desks, seated agents, break room, and real-time activity.
+- **Amber Yellow Light Mode:** Default warm cream palette paired with vibrant amber yellow accents.
+- **Enhanced Typography:** Integrated clean Lato UI font alongside retro pixel headers.
+- **Fixed Update Checker:** Automated update checking wired to NamanGaonkar/CONCLAVE.
+- **Zero Paid Walls:** Clean settings with all Pro promotions and external services removed.

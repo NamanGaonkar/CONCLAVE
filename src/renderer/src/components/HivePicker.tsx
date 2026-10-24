@@ -10,9 +10,6 @@ export interface HivePickerProps {
   onOpenCurrent: () => void;
 }
 
-// Set right before a hive SWITCH so App skips this picker once after the relaunch
-// changeHome triggers — otherwise the user would land back on the picker for the
-// hive they just chose. App.tsx reads + clears it on mount.
 const SKIP_KEY = 'cth.skipHivePickerOnce';
 
 function folderName(path: string): string {
@@ -20,11 +17,7 @@ function folderName(path: string): string {
 }
 
 /**
- * HivePicker — the launch-time workspace selector. A "conclave" is a harness home
- * folder: its own agents, memory, tasks, and history. On reopen the user can open
- * the workspace they were in (fast, in-place), jump to a recent one, browse to an
- * existing folder, or start a new one. Switching to a DIFFERENT home goes through
- * changeHome('fresh'), which tears down services and relaunches against it.
+ * HivePicker — the launch-time workspace selector.
  */
 export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   const current = config.harnessHome;
@@ -62,18 +55,17 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: '#0C0A07',
+      background: 'var(--cth-cream-200)',
       backgroundImage:
-        'radial-gradient(circle at 50% 50%, #14110C 0%, #0C0A07 100%)',
+        'radial-gradient(circle at 50% 50%, var(--cth-cream-100) 0%, var(--cth-cream-300) 100%)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 200,
-      padding: 32,
-      fontFamily: 'Lato, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif'
+      padding: 32
     }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
         <PixelPanel variant="dialog" title="SELECT A CONCLAVE WORKSPACE" noPadding>
           <div style={{ padding: 24, display: 'flex', flexDirection: 'column', gap: 16 }}>
-            <p style={{ margin: 0, fontSize: 13, lineHeight: '21px', color: '#D8CEB8' }}>
+            <p style={{ margin: 0, fontSize: 13, lineHeight: '21px', color: 'var(--cth-ink-700)' }}>
               A <strong>Conclave workspace</strong> is the folder where the app keeps everything for one
               workspace — its settings, your agents and their memory, tasks, triggers, and history.
               Each workspace is separate and self-contained, so you can run different setups side by side.
@@ -83,20 +75,20 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* CURRENT — the last-used home, the one-click default. */}
             {current && (
               <div>
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 11, fontWeight: 700, color: '#FFD15C', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   CURRENT WORKSPACE
                 </div>
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px',
-                  background: '#1B1710', border: '1px solid #F5AF28', borderRadius: 4
+                  background: 'var(--cth-lemon-light)', border: '1px solid var(--cth-lemon)', borderRadius: 2
                 }}>
                   <Icon name="folder" />
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 13, fontWeight: 700, color: '#F5EDD8', lineHeight: '18px' }}>
+                    <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 13, fontWeight: 700, color: 'var(--cth-ink-900)', lineHeight: '18px' }}>
                       {folderName(current)}
                     </div>
                     <div style={{
-                      fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: '#9E937D',
+                      fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)',
                       whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: 'rtl', textAlign: 'left'
                     }}>{current}</div>
                   </div>
@@ -110,7 +102,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* RECENTS — other homes this install has opened before. */}
             {recents.length > 0 && (
               <div>
-                <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 11, fontWeight: 700, color: '#9E937D', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   RECENT WORKSPACES
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>
@@ -122,22 +114,22 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
                       title={`Switch to ${h} (reloads the app)`}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
-                        background: '#14110C', border: '1px solid #2A2417', borderRadius: 4,
+                        background: 'var(--cth-paper-100)', border: '1px solid var(--cth-ink-300)', borderRadius: 2,
                         cursor: busy ? 'default' : 'pointer', textAlign: 'left',
                         opacity: busy && busy !== h ? 0.5 : 1
                       }}
                     >
                       <Icon name="folder" />
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: 'Lato, sans-serif', fontSize: 12, fontWeight: 600, color: '#F5EDD8' }}>
+                        <div style={{ fontFamily: 'var(--cth-font-ui)', fontSize: 12, fontWeight: 600, color: 'var(--cth-ink-900)' }}>
                           {folderName(h)}
                         </div>
                         <div style={{
-                          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: '#9E937D',
+                          fontFamily: 'var(--cth-font-mono)', fontSize: 11, color: 'var(--cth-ink-500)',
                           whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', direction: 'rtl', textAlign: 'left'
                         }}>{h}</div>
                       </div>
-                      <span style={{ fontSize: 11, color: '#FFD15C', flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, color: 'var(--cth-ink-500)', flexShrink: 0 }}>
                         {busy === h ? 'opening…' : 'switch →'}
                       </span>
                     </button>
@@ -149,8 +141,8 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* ERROR */}
             {error && (
               <div style={{
-                padding: '8px 12px', background: '#321B17', border: '1px solid #E06D53', borderRadius: 4,
-                fontFamily: 'Lato, sans-serif', fontSize: 12, color: '#FF8A65'
+                padding: '8px 12px', background: 'var(--cth-coral-light)', border: '1px solid var(--cth-coral)', borderRadius: 2,
+                fontSize: 12, color: 'var(--cth-coral)'
               }}>
                 {error}
               </div>
@@ -159,9 +151,9 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* ACTIONS */}
             <div style={{
               display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-              paddingTop: 8, borderTop: '1px solid #2A2417'
+              paddingTop: 8, borderTop: '1px solid var(--cth-ink-100)'
             }}>
-              <span style={{ fontSize: 11, color: '#9E937D' }}>
+              <span style={{ fontSize: 11, color: 'var(--cth-ink-500)' }}>
                 Tip: workspace folders can be moved or backed up anytime.
               </span>
               <div style={{ display: 'flex', gap: 8 }}>

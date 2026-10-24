@@ -1,5 +1,5 @@
 /**
- * App-wide theme: Ember dark theme by default.
+ * App-wide theme: Light mode with Amber Yellow accent by default.
  */
 import { useSyncExternalStore } from 'react';
 
@@ -12,7 +12,7 @@ function load(): AppTheme {
     const v = window.localStorage.getItem(LS_KEY);
     if (v === 'dark' || v === 'light') return v;
   } catch { /* noop */ }
-  return 'dark';
+  return 'light';
 }
 
 let theme: AppTheme = load();

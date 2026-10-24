@@ -1,25 +1,112 @@
-/* Conclave Ember Dark Theme Design Tokens */
-:root,
-:root[data-cth-theme='dark'],
-:root[data-cth-theme='light'] {
-  /* Base Ember Surfaces */
-  --cth-cream-50:  #0C0A07;   /* main background ground */
-  --cth-cream-100: #14110C;   /* sidebars, secondary surfaces */
-  --cth-cream-200: #1B1710;   /* cards, elevation */
-  --cth-cream-300: #241E15;   /* active, hover surface */
-  --cth-paper-100: #14110C;   /* card backgrounds, inputs, terminal container */
-  --cth-paper-200: #1B1710;   /* dialog background */
+/* Conclave Light & Dark Design Tokens with Amber Yellow Accent */
+:root {
+  /* Base Surfaces — Warm Cream / Paper Light Mode */
+  --cth-cream-50:  #FFFDF5;
+  --cth-cream-100: #FFF8E7;
+  --cth-cream-200: #F4E9C7;
+  --cth-cream-300: #E8D9A0;
+  --cth-paper-100: #FCFAF0;
+  --cth-paper-200: #F0EAD2;
 
-  /* Ember Text Ramp */
-  --cth-ink-900: #F5EDD8;   /* primary text */
-  --cth-ink-700: #D8CEB8;   /* secondary text */
-  --cth-ink-500: #9E937D;   /* tertiary / hint text */
-  --cth-ink-300: #2A2417;   /* borders */
-  --cth-ink-100: #1D1810;   /* soft dividers */
+  /* Ink */
+  --cth-ink-900: #1A1320;
+  --cth-ink-700: #3D2E4A;
+  --cth-ink-500: #6B5878;
+  --cth-ink-300: #A899B5;
+  --cth-ink-100: #D9CFE0;
 
-  /* Amber & Accents */
-  --cth-lemon:       #F5AF28; /* primary amber */
-  --cth-lemon-light: #2A1F0B; /* amber subtle fill */
+  /* Amber Yellow Accents */
+  --cth-lemon:       #F5AF28; /* Rich amber yellow */
+  --cth-lemon-light: #FDF1D6; /* Warm light amber */
+  --cth-amber:       #F5AF28;
+  --cth-amber-bright:#FFD15C;
+  --cth-amber-light: #FDF1D6;
+
+  --cth-coral:       #D96A62;
+  --cth-coral-light: #F3D3CD;
+  --cth-mint:        #5CA97A;
+  --cth-mint-light:  #D2E7DA;
+  --cth-sky:         #4F9FAF;
+  --cth-sky-light:   #CFE5E9;
+  --cth-lilac:       #9482D3;
+  --cth-lilac-light: #E0DAF2;
+  --cth-peach:       #D99168;
+  --cth-peach-light: #F3DACA;
+
+  /* Status Tokens */
+  --cth-status-idle:       #A199AB;
+  --cth-status-thinking:   #4F9FAF;
+  --cth-status-working:    #F5AF28;
+  --cth-status-waiting:    #7C8FD4;
+  --cth-status-blocked:    #D96A62;
+  --cth-status-success:    #5CA97A;
+  --cth-status-ghost:      #D9D3DE;
+  --cth-status-compacting: #9482D3;
+  --cth-status-looping:    #D99168;
+  --cth-status-typing:     #F5AF28;
+
+  /* Spacing */
+  --cth-space-0: 0px;
+  --cth-space-1: 4px;
+  --cth-space-2: 8px;
+  --cth-space-3: 12px;
+  --cth-space-4: 16px;
+  --cth-space-5: 24px;
+  --cth-space-6: 32px;
+  --cth-space-7: 48px;
+  --cth-space-8: 64px;
+
+  /* Typography */
+  --cth-font-display: "Press Start 2P", "Lato", -apple-system, BlinkMacSystemFont, monospace;
+  --cth-font-ui:      "Lato", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --cth-font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Type scale */
+  --cth-text-display-lg: 16px;
+  --cth-text-display-md: 10px;
+  --cth-text-display-sm: 8px;
+  --cth-text-body-lg:    15px;
+  --cth-text-body-md:    13px;
+  --cth-text-body-sm:    11px;
+  --cth-text-mono-md:    12px;
+  --cth-text-mono-sm:    11px;
+
+  /* Line heights */
+  --cth-lh-display-lg: 20px;
+  --cth-lh-display-md: 14px;
+  --cth-lh-display-sm: 11px;
+  --cth-lh-body-lg:    22px;
+  --cth-lh-body-md:    18px;
+  --cth-lh-body-sm:    15px;
+  --cth-lh-mono:       16px;
+
+  /* Hard shadow */
+  --cth-shadow-hard: 3px 3px 0 rgba(26, 19, 32, 0.14);
+
+  /* Panel borders */
+  --cth-panel-border:          inset 0 0 0 1px var(--cth-ink-300);
+  --cth-on-accent:             #1A1320;
+  --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
+  --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
+  --cth-panel-border-dialog:   inset 0 0 0 1px var(--cth-ink-500);
+}
+
+:root[data-cth-theme='dark'] {
+  --cth-cream-50:  #14110C;
+  --cth-cream-100: #1B1710;
+  --cth-cream-200: #241E15;
+  --cth-cream-300: #2F271B;
+  --cth-paper-100: #1B1710;
+  --cth-paper-200: #241E15;
+
+  --cth-ink-900: #F5EDD8;
+  --cth-ink-700: #D8CEB8;
+  --cth-ink-500: #9E937D;
+  --cth-ink-300: #4A3E2A;
+  --cth-ink-100: #2A2417;
+
+  --cth-lemon:       #F5AF28;
+  --cth-lemon-light: #2A1F0B;
   --cth-amber:       #F5AF28;
   --cth-amber-bright:#FFD15C;
   --cth-amber-light: #2A1F0B;
@@ -35,7 +122,6 @@
   --cth-peach:       #E09253;
   --cth-peach-light: #322116;
 
-  /* Status Tokens */
   --cth-status-idle:       #7A7263;
   --cth-status-thinking:   #55A6BF;
   --cth-status-working:    #F5AF28;
@@ -47,48 +133,5 @@
   --cth-status-looping:    #E09253;
   --cth-status-typing:     #FFD15C;
 
-  /* Spacing */
-  --cth-space-0: 0px;
-  --cth-space-1: 4px;
-  --cth-space-2: 8px;
-  --cth-space-3: 12px;
-  --cth-space-4: 16px;
-  --cth-space-5: 24px;
-  --cth-space-6: 32px;
-  --cth-space-7: 48px;
-  --cth-space-8: 64px;
-
-  /* Typography: Lato as primary display & UI font */
-  --cth-font-display: "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --cth-font-ui:      "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-  --cth-font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
-
-  /* Type scale */
-  --cth-text-display-lg: 16px;
-  --cth-text-display-md: 13px;
-  --cth-text-display-sm: 11px;
-  --cth-text-body-lg:    15px;
-  --cth-text-body-md:    14px;
-  --cth-text-body-sm:    13px;
-  --cth-text-mono-md:    13px;
-  --cth-text-mono-sm:    12px;
-
-  /* Line heights */
-  --cth-lh-display-lg: 24px;
-  --cth-lh-display-md: 20px;
-  --cth-lh-display-sm: 16px;
-  --cth-lh-body-lg:    24px;
-  --cth-lh-body-md:    20px;
-  --cth-lh-body-sm:    18px;
-  --cth-lh-mono:       20px;
-
-  /* Drop Shadow */
-  --cth-shadow-hard: 0 4px 16px rgba(0, 0, 0, 0.65);
-
-  /* Panel borders */
-  --cth-panel-border:          inset 0 0 0 1px var(--cth-ink-300);
-  --cth-on-accent:             #0C0A07;
-  --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
-  --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
-  --cth-panel-border-dialog:   inset 0 0 0 1px var(--cth-ink-300);
+  --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
 }

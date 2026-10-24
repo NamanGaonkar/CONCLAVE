@@ -1,12 +1,12 @@
 # Conclave
 
-> Conclave is a free, local-first desktop application that runs a network of autonomous
+> Conclave is a free, local-first desktop application that runs a team of autonomous
 > AI coding agents (Claude Code, Antigravity, OpenAI Codex, Gemini, Cursor, Grok, Copilot)
 > completely offline on your own machine. Each agent is a real CLI running in its own
 > dedicated PTY terminal, authenticated with your existing local keys and subscriptions.
 > The Lead agent coordinates the team, manages task routing, memory, and brings only
 > what needs human input.
-> Current version: 0.5.0.
+> Current version: 0.5.1.
 
 Engines supported:
 - Claude Code
@@ -17,7 +17,8 @@ Engines supported:
 - Custom CLI commands & local LLMs (Ollama, LM Studio, vLLM)
 
 Key Features:
-- Branch Metro View: Interactive vector subway map tracking agents, tasks, merges, redirects, and conflict signals
+- Virtual Pixel Office: Interactive visual floor with desks, characters, monitors, and errands
+- Warm Amber Yellow Light Theme and clean Lato typography
 - Autonomous multi-agent coordination with local PTY isolation
 - Persistent memory graph and cross-session knowledge storage
 - Zero remote telemetry, zero phone-homes, completely private

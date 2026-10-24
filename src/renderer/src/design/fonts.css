@@ -1,4 +1,12 @@
-/* Self-hosted typography: Lato and JetBrains Mono for Conclave Ember theme */
+/* Self-hosted typography for Conclave */
+
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../assets/fonts/press-start-2p-latin-400.woff2') format('woff2');
+}
 
 @font-face {
   font-family: 'Lato';
@@ -14,6 +22,14 @@
   font-weight: 700;
   font-display: swap;
   src: url('../assets/fonts/lato-latin-700.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url('../assets/fonts/inter-latin-var.woff2') format('woff2');
 }
 
 @font-face {

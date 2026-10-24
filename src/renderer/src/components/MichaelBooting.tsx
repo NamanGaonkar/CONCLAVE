@@ -2,7 +2,7 @@ import { PixelPanel } from '@/components/PixelPanel';
 import { useResolvedGodName } from '@/hooks/useResolvedGodName';
 
 /**
- * Loader shown on the metro floor while the lead agent is initializing on
+ * Loader shown on the empty floor while the lead agent is clocking in on
  * launch. Replaces the "add agent" prompt so a returning user doesn't see the
  * empty-floor call-to-action before the lead has booted.
  */
@@ -15,7 +15,7 @@ export function MichaelBooting() {
       pointerEvents: 'none'
     }}>
       <div style={{ pointerEvents: 'auto', width: 380 }}>
-        <PixelPanel variant="dialog" title="LEAD INITIALIZING" noPadding>
+        <PixelPanel variant="dialog" title="CLOCKING IN" noPadding>
           <div style={{
             padding: 24,
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16
@@ -39,7 +39,7 @@ export function MichaelBooting() {
               margin: 0, fontSize: 13, lineHeight: '20px', textAlign: 'center',
               color: 'var(--cth-ink-700)'
             }}>
-              {godName} is initializing the Conclave transit network and readying the lines. Hang tight…
+              {godName} is clocking in and getting the floor ready. Hang tight…
             </p>
           </div>
         </PixelPanel>
