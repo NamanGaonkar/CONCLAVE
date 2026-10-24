@@ -1,8 +1,20 @@
 # CLI-to-Desktop Master Rule Book: Building Production Desktop Apps for CLI Agents
 
-> **Purpose:** This document is an end-to-end blueprint for building, packaging, deploying, and releasing a production-grade Electron desktop application from a CLI coding agent (such as `whis`, `conclave`, `claude`, or `agy`).
+> **Purpose:** This document is an end-to-end blueprint for building, packaging, deploying, and releasing a production-grade Electron desktop application from a CLI coding agent (such as `whis`).
 >
 > Any AI agent or developer can follow this guide step-by-step in a new repository to produce an installer (`.exe` on Windows, `.dmg` on macOS, `.AppImage` on Linux), real-time PTY terminal streams, persistent SQLite memory, robust process supervision, and automated GitHub CI/CD releases.
+
+---
+
+## 0. Product Scope & Philosophy: Just Whis & Providers (No Bloat)
+
+> [!IMPORTANT]
+> **Strict Product Identity: This is NOT a generic Claude Code clone, Codex wrapper, or multi-agent office simulator.**
+>
+> **Whis Desktop must be laser-focused:**
+> 1. **Pure Whis Core**: The entire desktop experience is centered 100% around your `whis` CLI agent. No pixel office floors, no multi-character avatars, no multi-agent team simulations, and no gimmicks. Just a fast, gorgeous, responsive command terminal and workspace for Whis.
+> 2. **Provider & Model Flexibility**: The only core companion feature is a clean, robust **Provider Settings** panel where users can add, switch, and configure their LLM providers (Anthropic Claude, OpenAI, Google Gemini, DeepSeek, Groq, OpenRouter, and local offline models via Ollama / LM Studio / vLLM).
+> 3. **Minimalist, Sovereign & Fast**: Sub-second startup time, ultra-low idle memory footprint, and 100% offline capability with local SQLite storage.
 
 ---
 
@@ -268,7 +280,140 @@ export function hardKillTree(pid: number): void {
 
 ---
 
-## 5. Persistence via `better-sqlite3` (`src/main/db.ts`)
+## 5. The Provider Management System: Seamlessly Adding & Switching Providers
+
+Unlike generic wrappers or bloated multi-agent tools, **Whis Desktop** focuses strictly on:
+1. Running **Whis** flawlessly.
+2. Giving the user a clean, instant way to **add, configure, and switch model providers**.
+
+### A. Provider Data Model (`src/shared/types.ts`)
+```typescript
+export type ProviderType = 'anthropic' | 'openai' | 'gemini' | 'groq' | 'deepseek' | 'ollama' | 'custom';
+
+export interface ProviderConfig {
+  id: string;                    // unique id, e.g. "prov-anthropic", "prov-local-ollama"
+  name: string;                  // display label, e.g. "Claude 3.7 Sonnet", "Local Ollama"
+  type: ProviderType;
+  baseUrl?: string;              // custom endpoint e.g. "http://localhost:11434/v1" or "https://api.deepseek.com/v1"
+  apiKey?: string;               // securely stored via safeStorage
+  selectedModel: string;         // e.g. "claude-3-7-sonnet-20250219", "gpt-4o", "llama3.3:70b"
+  availableModels: string[];     // model dropdown choices
+  isActive: boolean;             // currently selected provider for Whis
+}
+```
+
+### B. Secure Storage & Injection into Whis (`src/main/providers.ts`)
+When Whis is spawned, the main process injects the active provider's credentials directly into `whis`'s process environment:
+
+```typescript
+import { safeStorage } from 'electron';
+import { getDatabase } from './db';
+import { ProviderConfig } from '../shared/types';
+
+export function getProviders(): ProviderConfig[] {
+  const db = getDatabase();
+  const row = db.prepare('SELECT value FROM kv WHERE key = ?').get('providers') as { value: string } | undefined;
+  if (!row) return getDefaultProviders();
+
+  const providers = JSON.parse(row.value) as ProviderConfig[];
+  // Decrypt API keys using Electron's native OS keychain / DPAPI encryption
+  return providers.map(p => ({
+    ...p,
+    apiKey: p.apiKey && safeStorage.isEncryptionAvailable()
+      ? safeStorage.decryptString(Buffer.from(p.apiKey, 'base64'))
+      : p.apiKey
+  }));
+}
+
+export function saveProviders(providers: ProviderConfig[]): void {
+  const db = getDatabase();
+  // Encrypt sensitive API keys before saving to SQLite
+  const encrypted = providers.map(p => ({
+    ...p,
+    apiKey: p.apiKey && safeStorage.isEncryptionAvailable()
+      ? safeStorage.encryptString(p.apiKey).toString('base64')
+      : p.apiKey
+  }));
+
+  db.prepare(`
+    INSERT INTO kv (key, value, updated_at) VALUES ('providers', ?, ?)
+    ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+  `).run(JSON.stringify(encrypted), Date.now());
+}
+
+export function getActiveProvider(): ProviderConfig | undefined {
+  return getProviders().find(p => p.isActive);
+}
+
+/** Injects active provider env vars when launching Whis */
+export function injectProviderEnv(env: Record<string, string>): void {
+  const active = getActiveProvider();
+  if (!active) return;
+
+  switch (active.type) {
+    case 'anthropic':
+      if (active.apiKey) env.ANTHROPIC_API_KEY = active.apiKey;
+      if (active.baseUrl) env.ANTHROPIC_BASE_URL = active.baseUrl;
+      env.WHIS_PROVIDER = 'anthropic';
+      break;
+    case 'openai':
+      if (active.apiKey) env.OPENAI_API_KEY = active.apiKey;
+      if (active.baseUrl) env.OPENAI_BASE_URL = active.baseUrl;
+      env.WHIS_PROVIDER = 'openai';
+      break;
+    case 'gemini':
+      if (active.apiKey) env.GEMINI_API_KEY = active.apiKey;
+      env.WHIS_PROVIDER = 'gemini';
+      break;
+    case 'ollama':
+      env.OLLAMA_HOST = active.baseUrl || 'http://localhost:11434';
+      env.WHIS_PROVIDER = 'ollama';
+      break;
+    case 'custom':
+      if (active.apiKey) env.WHIS_API_KEY = active.apiKey;
+      if (active.baseUrl) env.WHIS_BASE_URL = active.baseUrl;
+      env.WHIS_PROVIDER = 'custom';
+      break;
+  }
+  if (active.selectedModel) {
+    env.WHIS_MODEL = active.selectedModel;
+  }
+}
+
+function getDefaultProviders(): ProviderConfig[] {
+  return [
+    {
+      id: 'prov-anthropic',
+      name: 'Anthropic',
+      type: 'anthropic',
+      selectedModel: 'claude-3-7-sonnet-20250219',
+      availableModels: ['claude-3-7-sonnet-20250219', 'claude-3-5-haiku-20241022'],
+      isActive: true
+    },
+    {
+      id: 'prov-openai',
+      name: 'OpenAI',
+      type: 'openai',
+      selectedModel: 'gpt-4o',
+      availableModels: ['gpt-4o', 'o3-mini', 'gpt-4.5-preview'],
+      isActive: false
+    },
+    {
+      id: 'prov-ollama',
+      name: 'Local Ollama',
+      type: 'ollama',
+      baseUrl: 'http://localhost:11434',
+      selectedModel: 'llama3.3:70b',
+      availableModels: ['llama3.3:70b', 'qwen2.5-coder:32b', 'deepseek-r1:14b'],
+      isActive: false
+    }
+  ];
+}
+```
+
+---
+
+## 6. Persistence via `better-sqlite3` (`src/main/db.ts`)
 
 Store prompt history, agent metadata, configuration, and logs locally:
 
@@ -327,12 +472,13 @@ function runMigrations(db: Database.Database): void {
 
 ---
 
-## 6. Preload Bridge (`src/preload/index.ts`)
+## 7. Preload Bridge (`src/preload/index.ts`)
 
 Expose a typed, secure API to the renderer:
 
 ```typescript
 import { contextBridge, ipcRenderer } from 'electron';
+import { ProviderConfig } from '../shared/types';
 
 const api = {
   // PTY Controls
@@ -354,6 +500,11 @@ const api = {
     return () => ipcRenderer.removeListener(channel, listener);
   },
 
+  // Provider Management (Add & Switch Providers)
+  getProviders: (): Promise<ProviderConfig[]> => ipcRenderer.invoke('providers:get'),
+  saveProviders: (providers: ProviderConfig[]): Promise<void> => ipcRenderer.invoke('providers:save', providers),
+  setActiveProvider: (id: string): Promise<void> => ipcRenderer.invoke('providers:setActive', id),
+
   // App & Updater
   getAppVersion: () => ipcRenderer.invoke('app:version'),
   checkForUpdates: () => ipcRenderer.invoke('updater:check'),
@@ -368,7 +519,7 @@ export type WhisAPI = typeof api;
 
 ---
 
-## 7. Renderer Terminal Component (`src/renderer/src/components/TerminalView.tsx`)
+## 8. Renderer Terminal Component (`src/renderer/src/components/TerminalView.tsx`)
 
 Render the terminal stream smoothly using `@xterm/xterm`:
 
@@ -447,7 +598,7 @@ export const TerminalView: React.FC<Props> = ({ sessionId }) => {
 
 ---
 
-## 8. Clean Visual Design & Typography Rules
+## 9. Clean Visual Design & Typography Rules
 
 Avoid pixelated fonts ("Press Start 2P") which look jagged and create uneven card heights. Standardize on modern antialiased typography:
 
@@ -519,7 +670,7 @@ export const PixelPanel: React.FC<{ title: string; children: React.ReactNode }> 
 
 ---
 
-## 9. Packaging Configuration (`electron-builder.yml`)
+## 10. Packaging Configuration (`electron-builder.yml`)
 
 This configuration packages native C++ addons (`node-pty`, `better-sqlite3`) cleanly and configures multi-platform distribution.
 
@@ -601,7 +752,7 @@ linux:
 
 ---
 
-## 10. Critical Helper Tools & Scripts
+## 11. Critical Helper Tools & Scripts
 
 ### A. The Environment-Sanitizing Runner (`tools/package.cjs`)
 > **The Problem It Solves:** If GitHub repo secrets for Apple Developer ID are unset, GitHub Actions sets `CSC_LINK=""`. In `electron-builder`, an empty string is treated as a file path, resolving to `/work/REPO/REPO` (the workspace directory), which crashes macOS builds with: `⨯ /work/REPO/REPO not a file`.
@@ -744,7 +895,7 @@ Write-Host "Done! Whis deployed locally."
 
 ---
 
-## 11. GitHub Actions CI/CD Pipeline (`.github/workflows/release.yml`)
+## 12. GitHub Actions CI/CD Pipeline (`.github/workflows/release.yml`)
 
 A cross-platform build matrix that automatically packages, hashes, and publishes releases to GitHub:
 
@@ -868,7 +1019,7 @@ jobs:
 
 ---
 
-## 12. Troubleshooting & Pitfall Checklist
+## 13. Troubleshooting & Pitfall Checklist
 
 | Trap | Symptom | Exact Prevention / Fix |
 |---|---|---|
