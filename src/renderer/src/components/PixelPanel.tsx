@@ -43,6 +43,7 @@ export function PixelPanel({
     boxShadow: borderByVariant[variant],
     padding: noPadding ? 0 : 'var(--cth-space-3)',
     position: 'relative',
+    borderRadius: 6,
     ...style
   };
 
@@ -60,13 +61,17 @@ export function PixelPanel({
         <div
           style={{
             margin: noPadding ? 0 : '-12px -12px 12px',
-            padding: '6px 12px 4px',
+            padding: '8px 12px',
             background: accent ? `var(--cth-${accent})` : 'var(--cth-cream-200)',
             color: 'var(--cth-ink-900)',
             fontFamily: 'var(--cth-font-display)',
             fontSize: 'var(--cth-text-display-md)',
+            fontWeight: 700,
+            letterSpacing: '0.04em',
             lineHeight: 'var(--cth-lh-display-md)',
-            boxShadow: 'inset 0 -1px 0 var(--cth-ink-900)'
+            boxShadow: 'inset 0 -1px 0 var(--cth-ink-300)',
+            borderTopLeftRadius: 6,
+            borderTopRightRadius: 6
           }}
         >
           {title}

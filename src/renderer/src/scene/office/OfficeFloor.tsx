@@ -1781,7 +1781,7 @@ export function OfficeFloor() {
         boxShadow: 'var(--cth-panel-border)',
         overflow: 'hidden',
         imageRendering: 'pixelated',
-        background: hex(colors.ink[900]),
+        background: 'var(--cth-cream-200)',
       }}
     />
   );

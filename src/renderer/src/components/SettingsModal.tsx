@@ -81,8 +81,10 @@ const slackInputStyle: CSSProperties = {
 
 const slackLabelStyle: CSSProperties = {
   fontFamily: 'var(--cth-font-display)',
-  fontSize: 8,
-  lineHeight: '12px',
+  fontSize: 11,
+  fontWeight: 700,
+  letterSpacing: '0.04em',
+  lineHeight: '16px',
   color: 'var(--cth-ink-700)',
   textTransform: 'uppercase'
 };
@@ -169,7 +171,7 @@ function clearLocalState(): void {
    seventeen times, in three slightly different forms, which is how a tab ends
    up looking subtly unlike its neighbours. */
 const sectionHead = {
-  fontFamily: 'var(--cth-font-display)', fontSize: 8, lineHeight: '12px',
+  fontFamily: 'var(--cth-font-display)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '16px',
   color: 'var(--cth-ink-500)', textTransform: 'uppercase', marginBottom: 10
 } as const;
 /** Same heading, tight under a section that supplies its own spacing. */
@@ -1462,7 +1464,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                                   border: 'none', borderRadius: '50%',
                                   background: showSlackHelp ? 'var(--cth-ink-700)' : 'var(--cth-ink-300)',
                                   color: showSlackHelp ? 'var(--cth-paper-100)' : 'var(--cth-ink-900)',
-                                  fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '16px'
+                                  fontFamily: 'var(--cth-font-display)', fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '16px'
                                 }}
                               >i</button>
                             </span>
@@ -2077,7 +2079,7 @@ export function SettingsModal({ config, onClose, initialSection }: SettingsModal
                   {activeSection === 'General' && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                       <div style={{
-                        fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                        fontFamily: 'var(--cth-font-display)', fontSize: 12, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '16px',
                         color: '#6E1423'
                       }}>{t('settings.general.dangerZone')}</div>
                       <p style={{ margin: 0, fontSize: 13, lineHeight: '20px', color: 'var(--cth-ink-700)' }}>

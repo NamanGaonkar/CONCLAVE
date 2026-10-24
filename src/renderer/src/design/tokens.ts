@@ -3,44 +3,44 @@
 
 export const colors = {
   cream: {
-    50: 0xfffdf5,
-    100: 0xfff8e7,
-    200: 0xf4e9c7,
-    300: 0xe8d9a0
+    50: 0xe5be53,
+    100: 0xf2d376,
+    200: 0xddb344,
+    300: 0xc49a2b
   },
   paper: {
-    100: 0xfcfaf0,
-    200: 0xf0ead2
+    100: 0xfaf0c8,
+    200: 0xf0dd8e
   },
   ink: {
-    900: 0x1a1320,
-    700: 0x3d2e4a,
-    500: 0x6b5878,
-    300: 0xa899b5,
-    100: 0xd9cfe0
+    900: 0x1c1405,
+    700: 0x3d2e0b,
+    500: 0x6e561c,
+    300: 0xa88732,
+    100: 0xd4ba6e
   },
-  // Amber Yellow accent
+  // Amber Gold accent
   accent: {
-    coral: 0xd96a62,
-    coralLight: 0xf3d3cd,
-    mint: 0x5ca97a,
-    mintLight: 0xd2e7da,
-    sky: 0x4f9faf,
-    skyLight: 0xcfe5e9,
-    lemon: 0xf5af28,       // Rich Amber Yellow
-    lemonLight: 0xfdf1d6,  // Warm Amber light fill
-    lilac: 0x9482d3,
-    lilacLight: 0xe0daf2,
-    peach: 0xd99168,
-    peachLight: 0xf3daca
+    coral: 0xbf433b,
+    coralLight: 0xf5cfca,
+    mint: 0x358a54,
+    mintLight: 0xc6e6d1,
+    sky: 0x2a7f96,
+    skyLight: 0xc0e2ea,
+    lemon: 0xb87503,       // Deep golden amber
+    lemonLight: 0xfceabb,  // Luminous golden yellow
+    lilac: 0x7d5ab8,
+    lilacLight: 0xdfd4f5,
+    peach: 0xba6b28,
+    peachLight: 0xf7ddc6
   },
   status: {
-    idle: 0xa199ab,
-    thinking: 0x4f9faf,
-    working: 0xf5af28,     // Amber Yellow
-    blocked: 0xd96a62,
-    success: 0x5ca97a,
-    ghost: 0xd9d3de
+    idle: 0x6e561c,
+    thinking: 0x2a7f96,
+    working: 0xb87503,     // Deep golden amber
+    blocked: 0xbf433b,
+    success: 0x358a54,
+    ghost: 0x8c7748
   },
   world: {
     grassLight: 0xd4eab0,
@@ -57,7 +57,7 @@ export const space = {
 } as const;
 
 export const type = {
-  display: '"Press Start 2P", "Lato", -apple-system, BlinkMacSystemFont, "Segoe UI", monospace',
+  display: '"Lato", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
   ui: '"Lato", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
   mono: '"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace'
 } as const;

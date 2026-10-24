@@ -14,7 +14,7 @@ export function AgentNameEditor({
   name,
   onCommit,
   uppercase = false,
-  fontSize = 'var(--cth-text-display-sm)'
+  fontSize = 'var(--cth-text-display-md)'
 }: AgentNameEditorProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(name);

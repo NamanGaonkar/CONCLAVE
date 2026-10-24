@@ -75,7 +75,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* CURRENT — the last-used home, the one-click default. */}
             {current && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   CURRENT WORKSPACE
                 </div>
                 <div style={{
@@ -102,7 +102,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
             {/* RECENTS — other homes this install has opened before. */}
             {recents.length > 0 && (
               <div>
-                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 9, color: 'var(--cth-ink-500)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--cth-font-display)', fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', color: 'var(--cth-ink-500)', marginBottom: 6 }}>
                   RECENT WORKSPACES
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 220, overflowY: 'auto' }}>

@@ -6,7 +6,7 @@
 > dedicated PTY terminal, authenticated with your existing local keys and subscriptions.
 > The Lead agent coordinates the team, manages task routing, memory, and brings only
 > what needs human input.
-> Current version: 0.5.1.
+> Current version: 0.5.2.
 
 Engines supported:
 - Claude Code

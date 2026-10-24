@@ -319,7 +319,7 @@ function Section({
       <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
         <span style={{
           fontFamily: 'var(--cth-font-display)',
-          fontSize: 9, lineHeight: '12px',
+          fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '16px',
           color: 'var(--cth-ink-900)',
           textTransform: 'uppercase'
         }}>{label}</span>
@@ -335,7 +335,7 @@ function Row({ label, children }: { label: string; children: React.ReactNode }) 
     <label style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
       <span style={{
         fontFamily: 'var(--cth-font-display)',
-        fontSize: 8, lineHeight: '12px',
+        fontSize: 11, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '16px',
         color: 'var(--cth-ink-700)',
         textTransform: 'uppercase'
       }}>{label}</span>

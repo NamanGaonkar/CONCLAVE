@@ -1,49 +1,54 @@
-/* Conclave Light & Dark Design Tokens with Amber Yellow Accent */
+/* Conclave Light & Dark Design Tokens with Darker Golden Yellow Light Mode */
+*, *::before, *::after {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
 :root {
-  /* Base Surfaces — Warm Cream / Paper Light Mode */
-  --cth-cream-50:  #FFFDF5;
-  --cth-cream-100: #FFF8E7;
-  --cth-cream-200: #F4E9C7;
-  --cth-cream-300: #E8D9A0;
-  --cth-paper-100: #FCFAF0;
-  --cth-paper-200: #F0EAD2;
+  /* Base Surfaces — Darker Golden Yellow Light Mode */
+  --cth-cream-50:  #E5BE53; /* Darker, rich golden yellow main background */
+  --cth-cream-100: #F2D376; /* Rich golden yellow panel surfaces */
+  --cth-cream-200: #DDB344; /* Darker golden yellow headers / insets */
+  --cth-cream-300: #C49A2B; /* Deep golden ochre borders */
+  --cth-paper-100: #FAF0C8; /* Warm bright golden parchment for terminals */
+  --cth-paper-200: #F0DD8E;
 
   /* Ink */
-  --cth-ink-900: #1A1320;
-  --cth-ink-700: #3D2E4A;
-  --cth-ink-500: #6B5878;
-  --cth-ink-300: #A899B5;
-  --cth-ink-100: #D9CFE0;
+  --cth-ink-900: #1C1405; /* Deep espresso black for crisp readability */
+  --cth-ink-700: #3D2E0B;
+  --cth-ink-500: #6E561C;
+  --cth-ink-300: #A88732;
+  --cth-ink-100: #D4BA6E;
 
-  /* Amber Yellow Accents */
-  --cth-lemon:       #F5AF28; /* Rich amber yellow */
-  --cth-lemon-light: #FDF1D6; /* Warm light amber */
-  --cth-amber:       #F5AF28;
-  --cth-amber-bright:#FFD15C;
-  --cth-amber-light: #FDF1D6;
+  /* Amber Gold Accents */
+  --cth-lemon:       #B87503; /* Deep golden amber */
+  --cth-lemon-light: #FCEABB; /* Warm light golden fill */
+  --cth-amber:       #B87503;
+  --cth-amber-bright:#D68804;
+  --cth-amber-light: #FCEABB;
 
-  --cth-coral:       #D96A62;
-  --cth-coral-light: #F3D3CD;
-  --cth-mint:        #5CA97A;
-  --cth-mint-light:  #D2E7DA;
-  --cth-sky:         #4F9FAF;
-  --cth-sky-light:   #CFE5E9;
-  --cth-lilac:       #9482D3;
-  --cth-lilac-light: #E0DAF2;
-  --cth-peach:       #D99168;
-  --cth-peach-light: #F3DACA;
+  --cth-coral:       #BF433B;
+  --cth-coral-light: #F5CFCA;
+  --cth-mint:        #358A54;
+  --cth-mint-light:  #C6E6D1;
+  --cth-sky:         #2A7F96;
+  --cth-sky-light:   #C0E2EA;
+  --cth-lilac:       #7D5AB8;
+  --cth-lilac-light: #DFD4F5;
+  --cth-peach:       #BA6B28;
+  --cth-peach-light: #F7DDC6;
 
   /* Status Tokens */
-  --cth-status-idle:       #A199AB;
-  --cth-status-thinking:   #4F9FAF;
-  --cth-status-working:    #F5AF28;
-  --cth-status-waiting:    #7C8FD4;
-  --cth-status-blocked:    #D96A62;
-  --cth-status-success:    #5CA97A;
-  --cth-status-ghost:      #D9D3DE;
-  --cth-status-compacting: #9482D3;
-  --cth-status-looping:    #D99168;
-  --cth-status-typing:     #F5AF28;
+  --cth-status-idle:       #6E561C;
+  --cth-status-thinking:   #2A7F96;
+  --cth-status-working:    #B87503;
+  --cth-status-waiting:    #5B6BB0;
+  --cth-status-blocked:    #BF433B;
+  --cth-status-success:    #358A54;
+  --cth-status-ghost:      #8C7748;
+  --cth-status-compacting: #7D5AB8;
+  --cth-status-looping:    #BA6B28;
+  --cth-status-typing:     #D68804;
 
   /* Spacing */
   --cth-space-0: 0px;
@@ -56,15 +61,15 @@
   --cth-space-7: 48px;
   --cth-space-8: 64px;
 
-  /* Typography */
-  --cth-font-display: "Press Start 2P", "Lato", -apple-system, BlinkMacSystemFont, monospace;
+  /* Typography — Clean, smooth, non-pixelated Lato / Inter */
+  --cth-font-display: "Lato", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --cth-font-ui:      "Lato", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   --cth-font-mono:    "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
 
-  /* Type scale */
+  /* Type scale — Proportional modern scale */
   --cth-text-display-lg: 16px;
-  --cth-text-display-md: 10px;
-  --cth-text-display-sm: 8px;
+  --cth-text-display-md: 13px;
+  --cth-text-display-sm: 11px;
   --cth-text-body-lg:    15px;
   --cth-text-body-md:    13px;
   --cth-text-body-sm:    11px;
@@ -72,20 +77,20 @@
   --cth-text-mono-sm:    11px;
 
   /* Line heights */
-  --cth-lh-display-lg: 20px;
-  --cth-lh-display-md: 14px;
-  --cth-lh-display-sm: 11px;
+  --cth-lh-display-lg: 22px;
+  --cth-lh-display-md: 18px;
+  --cth-lh-display-sm: 15px;
   --cth-lh-body-lg:    22px;
   --cth-lh-body-md:    18px;
   --cth-lh-body-sm:    15px;
   --cth-lh-mono:       16px;
 
-  /* Hard shadow */
-  --cth-shadow-hard: 3px 3px 0 rgba(26, 19, 32, 0.14);
+  /* Symmetrical smooth shadow */
+  --cth-shadow-hard: 0 4px 14px rgba(28, 20, 5, 0.12), 0 1px 3px rgba(28, 20, 5, 0.08);
 
   /* Panel borders */
   --cth-panel-border:          inset 0 0 0 1px var(--cth-ink-300);
-  --cth-on-accent:             #1A1320;
+  --cth-on-accent:             #FFFFFF;
   --cth-panel-border-inset:    inset 0 0 0 1px var(--cth-ink-100);
   --cth-panel-border-terminal: inset 0 0 0 1px var(--cth-ink-300);
   --cth-panel-border-dialog:   inset 0 0 0 1px var(--cth-ink-500);
@@ -133,5 +138,5 @@
   --cth-status-looping:    #E09253;
   --cth-status-typing:     #FFD15C;
 
-  --cth-shadow-hard: 4px 4px 0 rgba(0, 0, 0, 0.45);
+  --cth-shadow-hard: 0 4px 16px rgba(0, 0, 0, 0.5), 0 1px 3px rgba(0, 0, 0, 0.3);
 }

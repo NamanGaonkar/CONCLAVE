@@ -253,7 +253,7 @@ export function App() {
   }, []);
 
   if (!config) {
-    return <div style={{ width: '100vw', height: '100vh', background: 'var(--cth-cream-100)' }} />;
+    return <div style={{ width: '100vw', height: '100vh', background: 'var(--cth-cream-50)' }} />;
   }
 
   if (!config.onboardingComplete) {
@@ -272,7 +272,8 @@ export function App() {
     <div style={{
       display: 'flex', flexDirection: 'column',
       width: '100vw', height: '100vh',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      background: 'var(--cth-cream-50)'
     }}>
       {/* rt-12: global fixed-overlay toast for voice-Michael completions ("Oscar
           finished X"). Self-positions bottom-right; renders null until one arrives. */}
@@ -396,7 +397,8 @@ export function App() {
         flex: 1, minHeight: 0,
         display: 'flex',
         padding: 16,
-        gap: 0
+        gap: 0,
+        background: 'var(--cth-cream-50)'
       }}>
         <div style={{ flex: 1, minHeight: 0, minWidth: 0, position: 'relative' }}>
           <OfficeFloor />
@@ -445,11 +447,11 @@ export function App() {
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
               <div style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                fontFamily: 'var(--cth-font-display)', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '18px',
                 color: 'var(--cth-ink-500)'
-              }}>INITIALIZING NETWORK</div>
+              }}>INITIALIZING FLOOR</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>
-                {bootingGodName} is initializing the transit network.<br />
+                {bootingGodName} is clocking in to the Conclave floor.<br />
                 The terminal will land here once ready.
               </p>
             </PixelPanel>
@@ -460,7 +462,7 @@ export function App() {
               justifyContent: 'center', alignItems: 'center', gap: 12
             }}>
               <div style={{
-                fontFamily: 'var(--cth-font-display)', fontSize: 10, lineHeight: '14px',
+                fontFamily: 'var(--cth-font-display)', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', lineHeight: '18px',
                 color: 'var(--cth-ink-500)'
               }}>NO AGENT SELECTED</div>
               <p style={{ margin: 0, fontSize: 13, textAlign: 'center', color: 'var(--cth-ink-700)' }}>

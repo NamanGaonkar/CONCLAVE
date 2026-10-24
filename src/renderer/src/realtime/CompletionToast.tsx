@@ -118,8 +118,10 @@ export function CompletionToast(): JSX.Element | null {
               alignItems: 'center',
               gap: 8,
               fontFamily: 'var(--cth-font-display)',
-              fontSize: 8,
-              lineHeight: '12px',
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: '0.04em',
+              lineHeight: '16px',
               color: 'var(--cth-ink-900)',
               textTransform: 'uppercase'
             }}

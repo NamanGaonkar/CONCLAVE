@@ -17,7 +17,7 @@ jobs:
           node-version: 20
           cache: npm
       - name: Install dependencies
-        run: npm ci
+        run: npm ci || npm install
       - name: Typecheck (node + web)
         run: npm run typecheck
       # Release gate: every advertised download link and docs version string must
@@ -38,5 +38,5 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci
+      - run: npm ci || npm install
       - run: npm run build
